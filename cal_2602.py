@@ -1,33 +1,57 @@
 #!/usr/bin/env python
 
-# fenugrec 2026
-# for keithley 2602 SMU, easily tweaked for other 2600 series
+# fenugrec 2026, gplv3
+# for keithley 2602 SMU, should be easily tweakable for other 2600 series
+
+# **** usage:
+# - create/edit .conf file for connection settings and cal resistor values
+# - customize dmm_* functions here as required
+# - dry-run to go through entire cal without saving to eeprom
+
+# **** code structure
+# - cal steps described in ref manual section 16, are implemented in functions 'step2' to 'step4';
+# - part of RM's step 3 (current ranges) is split to a step3b func since it requires different wiring and code
+# - main() near the end initializes stuff and includes step1
+# - dmm functions need to be customized to provide V and I readings, see dmm_read_v() and dmm_read_i()
+# - config is held in external cal.conf to avoid having to edit this script too much
 
 # TODO :
-# -check warmup time by reading 'uptime' 
+# -move dmm_* funcs to external file ?
 # -check errors with *STB?
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
 
 import pyvisa
 import argparse
 import sys
-import shutil
 import datetime as dt
 from dataclasses import dataclass
+import configparser
 
-######## configure stuff here
-step_dwell = 3  #for all V/I ranges
-ipulse_ton = 100e-3  #for 3A / 10A ranges
-ipulse_toff = 10 #cooldown ?
-r5_actual = 0.50087 # as characterized for 3A/10A ranges
-zero_actual = 0 # for contact check; not sure if needs measurement (SM just gives 0)
-r50_l = 50    #50r resistor to tie between L and SL (step 4)
-r50_h = 50    #50r resistor to tie between H and SH (step 4)
+# some config class magic, https://alexandra-zaharia.github.io/posts/python-configuration-and-dataclasses/
+class DynamicConfig:
+    def __init__(self, conf):
+        if not isinstance(conf, dict):
+            raise TypeError(f'dict expected, found {type(conf).__name__}')
+
+        self._raw = conf
+        for key, value in self._raw.items():
+            setattr(self, key, value)
+
+class DynamicConfigIni:
+    def __init__(self, conf):
+        if not isinstance(conf, configparser.ConfigParser):
+            raise TypeError(f'ConfigParser expected, found {type(conf).__name__}')
+
+        self._raw = conf
+        for key, value in self._raw.items():
+            setattr(self, key, DynamicConfig(dict(value.items())))
+
+global cfg
 
 def open_k26(resman):
-    k26_res = resman.open_resource('ASRL/dev/ttyUSB0::INSTR')
-    k26_res.baud_rate = 115200
-    k26_res.flow_control = VI_ASRL_FLOW_RTS_CTS
+    k26_res = resman.open_resource(cfg.dut.res)
+    k26_res.baud_rate = cfg.dut.baud
+    k26_res.flow_control = cfg.dut.flow
     idstring = k26_res.query('*idn?')
     if not idstring.contains('2602'):
         print("ID query mismatch")
@@ -35,7 +59,7 @@ def open_k26(resman):
     return k26_res
 
 def open_dmm(resman):
-    dmm = resman.open_resource('GPIB0::3:INSTR')
+    dmm = resman.open_resource(cfg.dmm.res)
     ids = dmm.query('*idn?')
     if not ids:
         print("no DMM ?")
@@ -92,7 +116,7 @@ icalsteps_hi = [
         calstep(10, 1e-10, 2.4, 'SENSE_LOCAL'),
         ]
 
-#step2, do one cal step; items 3b to 14 or 15b to 26 (once for each polarity)
+#step2, do one voltage cal step; items 3b to 14 or 15b to 26 (once for each polarity)
 # sign : 1 or -1
 def step2_do_one(k26, dmm, chan, calstep, sign):
     if sign >= 0:
@@ -105,14 +129,14 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
         setpoint = -calstep.setpoint
     k26.write(f'smu{chan}.source.levelv = {zval}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
-    sleep(step_dwell)
+    sleep(cfg.cal.step_dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
     k26.write(f'z_rdg = smu{chan}.measure.v()')
     dmm_z = dmm_read_v(dmm)
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.levelv = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
-    sleep(step_dwell)
+    sleep(cfg.cal.step_dwell)
     k26.write(f'fs_rdg = smu{chan}.measure.v()')
     dmm_fs = dmm_read_v(dmm)
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
@@ -155,14 +179,14 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
         setpoint = -calstep.setpoint
     k26.write(f'smu{chan}.source.leveli = {zval}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
-    sleep(step_dwell)
+    sleep(cfg.cal.step_dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
     k26.write(f'z_rdg = smu{chan}.measure.i()')
     dmm_z = dmm_read_i(dmm)
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.leveli = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
-    sleep(step_dwell)
+    sleep(cfg.cal.step_dwell)
     k26.write(f'fs_rdg = smu{chan}.measure.i()')
     dmm_fs = dmm_read_i(dmm)
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
@@ -204,20 +228,20 @@ def step3b_do_one(k26, dmm, chan, calstep, sign):
         setpoint = -calstep.setpoint
     k26.write(f'smu{chan}.source.leveli = {zval}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
-    sleep(ipulse_ton)
+    sleep(cfg.cal.ipulse_ton)
     k26.write(f'z_rdg = smu{chan}.measure.i()')
     dmm_z_raw = dmm_read_v(dmm) 
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.leveli = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
-    sleep(ipulse_ton)
+    sleep(cfg.cal.ipulse_ton)
     k26.write(f'fs_rdg = smu{chan}.measure.i()')
     dmm_fs_raw = dmm_read_v(dmm)
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
-    sleep(ipulse_toff)
-    dmm_z = dmm_z_raw / r5_actual
-    dmm_fs = dmm_fs_raw / r5_actual
+    sleep(cfg.cal.ipulse_toff)
+    dmm_z = dmm_z_raw / cfg.cal.r5_actual
+    dmm_fs = dmm_fs_raw / cfg.cal.r5_actual
     calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     logf.write(f'I cal step (dmm raw zero={dmm_z_raw}, fs={dmm_fs_raw}):', calcmd)
     k26.write(calcmd)
@@ -246,15 +270,15 @@ def step4(k26, chan):
     print('******** STEP 4 (contact 0) . Verify connections (fig 16-4):')
     print('*** no DMM; short L -> SL, and H -> SH')
     input("-------- press Enter when ready ---------")
-    sleep(step_dwell)
+    sleep(cfg.cal.step_dwell)
     k26.write('r0_hi, r0_lo = smu{chan}.contact.r()')
     print('******** STEP 4 (contact 50R) . Verify connections (fig 16-5):')
     print('*** no DMM; L -> 50R_l -> SL, and H -> 50R_h -> SH')
     input("-------- press Enter when ready ---------")
-    sleep(step_dwell)
+    sleep(cfg.cal.step_dwell)
     k26.write('r50_hi, r50_lo = smu{chan}.contact.r()')
-    k26.write(f'smu{chan}.contact.calibratelo(r0_lo, {z_actual}, {r50_lo}, {r50_l})')
-    k26.write(f'smu{chan}.contact.calibratehi(r0_hi, {z_actual}, {r50_hi}, {r50_h})')
+    k26.write(f'smu{chan}.contact.calibratelo(r0_lo, {cfg.cal.r0_actual}, {r50_lo}, {cfg.cal.r50_l})')
+    k26.write(f'smu{chan}.contact.calibratehi(r0_hi, {cfg.cal.r0_actual}, {r50_hi}, {cfg.cal.r50_h})')
 
 def step5(k26, chan):
     if testmode: return
@@ -266,12 +290,17 @@ def step5(k26, chan):
 
 def main():
     parser = argparse.ArgumentParser(description="K 2600 calibration script")
-    parser.add_argument('-c', '--chan', required=True, help='select channel [a|b]')
-    parser.add_argument('-t', action='store_true', help='run in test mode, will not save cal')
-    parser.add_argument('-l', '--log', type=argparse.FileType('w'), help='output log file')
+    parser.add_argument('-c', '--cfg', type=argparse.FileType('r'), required=True, help='config file')
+    parser.add_argument('-s', '--chan', required=True, help='select channel [a|b]')
+    parser.add_argument('-t', action='store_true', help='dry run, will not save cal')
+    parser.add_argument('-l', '--log', type=argparse.FileType('w+'), help='output log file')
     args = parser.parse_args(sys.argv[1:])
 
-    if (args.chan != 'a') or (args.chan != 'b'):
+    parser = configparser.ConfigParser()
+    parser.read_file(args.cfg)
+    cfg = DynamicConfigIni(parser)
+
+    if (args.chan != 'a') and (args.chan != 'b'):
         print("bad channel, must be a or b")
         exit()
 
@@ -281,10 +310,22 @@ def main():
     testmode = args.t
 
     rm = pyvisa.ResourceManager()
-    logf.write(f'start cal on {dt.datetime.now().isoformat()}, chan {args.chan}')
+    logf.write(f'start cal on {dt.datetime.now().isoformat()}, SMU chan {args.chan}')
+    logf.write(f'Using following parameters for cal:\n{cfg}')
+
     if testmode:
         logf.write(' ***************** test mode ! will not save cal ! ****************** ')
-    # step 1 : open stuff
+    print('******** STEP 1 (prep)')
     k26 = open_k26(rm)
     dmm = open_dmm(rm)
+    k26_model = k26.query('print(localnode.model)')
+    k26_sn = k26.query('print(localnode.serialno)')
+    k26_rev = k26.query('print(localnode.revision)')
+    uptime = k26.query_ascii_values('print(os.clock())')
+    logf.write(f'connected to model {k26_model}, sn # {k26_sn}, rev {k26_rev}; uptime {uptime}')
+    if uptime < (2 * 3600):
+        print('******* WARNING **********')
+        print(f'******* uptime ({uptime/60} minutes) below minimum recommended 2h **********')
 
+if __name__ == '__main__':
+    main()
