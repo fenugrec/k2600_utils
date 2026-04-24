@@ -27,7 +27,7 @@ function dumpcal(smux)
 		print(string.format('%g V\t%X\t%X\t%X\t%X', cp, u,v,x,y))
 		u,v = smux.source.getcalv(-cp)
 		x,y = smux.measure.getcalv(-cp)
-		print(string.format('%g V\t%X\t%X\t%X\t%X', cp, u,v,x,y))
+		print(string.format('%g V\t%X\t%X\t%X\t%X', -cp, u,v,x,y))
 	end
 	print('')
 
