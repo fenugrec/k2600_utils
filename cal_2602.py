@@ -4,7 +4,6 @@
 # for keithley 2602 SMU, easily tweaked for other 2600 series
 
 # TODO :
-# -step 4
 # -check warmup time by reading 'uptime' 
 # -check errors with *STB?
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
@@ -21,6 +20,9 @@ step_dwell = 3  #for all V/I ranges
 ipulse_ton = 100e-3  #for 3A / 10A ranges
 ipulse_toff = 10 #cooldown ?
 r5_actual = 0.50087 # as characterized for 3A/10A ranges
+zero_actual = 0 # for contact check; not sure if needs measurement (SM just gives 0)
+r50_l = 50    #50r resistor to tie between L and SL (step 4)
+r50_h = 50    #50r resistor to tie between H and SH (step 4)
 
 def open_k26(resman):
     k26_res = resman.open_resource('ASRL/dev/ttyUSB0::INSTR')
@@ -56,7 +58,7 @@ def dmm_read_i(dmm):
     return dmm.query_ascii_values(':whatsyouramps?')
 
 ######## cal points
-#tweak according to 2601/02/11/12, 35/36 needs more work
+#tweak according to 2601/02/11/12, 35/36 needs more work. Tables 16-2 etc
 
 @dataclass
 class calstep():
@@ -64,30 +66,30 @@ class calstep():
     zval: float
     setpoint: float
     sensemode: string
-    sourceonly:bool = False #by default, cal both Source and Measure modes. see table 16-2 footnotes
+    sourceonly:bool = False #by default, cal both Source and Measure modes.
 
 vcalsteps = [
-        calstep(100e-3, 1e-12, 90e-3, 'SENSE_LOCAL')
-        calstep(100e-3, 1e-10, 90e-3, 'SENSE_REMOTE')
-        calstep(1, 1e-10, 0.9, 'SENSE_LOCAL')
-        calstep(1, 1e-10, 0.9, 'SENSE_CALA', sourceonly=True)
-        calstep(6, 1e-10, 5.4, 'SENSE_LOCAL')
-        calstep(40, 1e-10, 36, 'SENSE_LOCAL')
+        calstep(100e-3, 1e-12, 90e-3, 'SENSE_LOCAL'),
+        calstep(100e-3, 1e-10, 90e-3, 'SENSE_REMOTE'),
+        calstep(1, 1e-10, 0.9, 'SENSE_LOCAL'),
+        calstep(1, 1e-10, 0.9, 'SENSE_CALA', sourceonly=True),
+        calstep(6, 1e-10, 5.4, 'SENSE_LOCAL'),
+        calstep(40, 1e-10, 36, 'SENSE_LOCAL'),
         ]
 icalsteps = [
-        calstep(100e-9, 1e-10, 90e-9, 'SENSE_LOCAL')
-        calstep(1e-6, 1e-10, 900e-9, 'SENSE_LOCAL')
-        calstep(10e-6, 1e-10, 9e-6, 'SENSE_LOCAL')
-        calstep(100e-6, 1e-10, 90e-6, 'SENSE_LOCAL')
-        calstep(1e-3, 1e-10, 900e-6, 'SENSE_LOCAL')
-        calstep(1e-3, 1e-10, 900e-6, 'SENSE_CALA', sourceonly=True)
-        calstep(10e-3, 1e-10, 9e-3, 'SENSE_LOCAL')
-        calstep(100e-3, 1e-10, 90e-3, 'SENSE_LOCAL')
-        calstep(1, 1e-10, 900e-3, 'SENSE_LOCAL')
+        calstep(100e-9, 1e-10, 90e-9, 'SENSE_LOCAL'),
+        calstep(1e-6, 1e-10, 900e-9, 'SENSE_LOCAL'),
+        calstep(10e-6, 1e-10, 9e-6, 'SENSE_LOCAL'),
+        calstep(100e-6, 1e-10, 90e-6, 'SENSE_LOCAL'),
+        calstep(1e-3, 1e-10, 900e-6, 'SENSE_LOCAL'),
+        calstep(1e-3, 1e-10, 900e-6, 'SENSE_CALA', sourceonly=True),
+        calstep(10e-3, 1e-10, 9e-3, 'SENSE_LOCAL'),
+        calstep(100e-3, 1e-10, 90e-3, 'SENSE_LOCAL'),
+        calstep(1, 1e-10, 900e-3, 'SENSE_LOCAL'),
         ]
 icalsteps_hi = [
-        calstep(3, 1e-10, 2.4, 'SENSE_LOCAL')
-        calstep(10, 1e-10, 2.4, 'SENSE_LOCAL')
+        calstep(3, 1e-10, 2.4, 'SENSE_LOCAL'),
+        calstep(10, 1e-10, 2.4, 'SENSE_LOCAL'),
         ]
 
 #step2, do one cal step; items 3b to 14 or 15b to 26 (once for each polarity)
@@ -116,8 +118,8 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     calcmd = f'smu{chan}.source.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     k26.write(calcmd)
-    logf.write('V cal step : ' calcmd)
-    if !sourceonly:
+    logf.write('V cal step : ', calcmd)
+    if not sourceonly:
         k26.write(f'smu{chan}.measure.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
     return
 
@@ -140,7 +142,7 @@ def step2(k26, dmm, chan):
         step2_do_one(k26, dmm, chan, calstep, -1)
     print('***** step 2 (voltage ranges) done ****')
     k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_AUTO')
-  return
+    return
 
 def step3_do_one(k26, dmm, chan, calstep, sign):
     if sign > 0:
@@ -166,8 +168,8 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     k26.write(calcmd)
-    logf.write('I cal step : ' calcmd)
-    if !sourceonly:
+    logf.write('I cal step :', calcmd)
+    if not sourceonly:
         k26.write(f'smu{chan}.measure.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
     return
 
@@ -217,7 +219,7 @@ def step3b_do_one(k26, dmm, chan, calstep, sign):
     dmm_z = dmm_z_raw / r5_actual
     dmm_fs = dmm_fs_raw / r5_actual
     calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
-    logf.write(f'I cal step (dmm raw zero={dmm_z_raw}, fs={dmm_fs_raw}): ' calcmd)
+    logf.write(f'I cal step (dmm raw zero={dmm_z_raw}, fs={dmm_fs_raw}):', calcmd)
     k26.write(calcmd)
     return
 
@@ -240,18 +242,32 @@ def step3b(k26, dmm, chan):
     print('***** step 3 (hi current ranges) done ****')
     k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_AUTO')
 
-def finalize_cal(k26, chan):
+def step4(k26, chan):
+    print('******** STEP 4 (contact 0) . Verify connections (fig 16-4):')
+    print('*** no DMM; short L -> SL, and H -> SH')
+    input("-------- press Enter when ready ---------")
+    sleep(step_dwell)
+    k26.write('r0_hi, r0_lo = smu{chan}.contact.r()')
+    print('******** STEP 4 (contact 50R) . Verify connections (fig 16-5):')
+    print('*** no DMM; L -> 50R_l -> SL, and H -> 50R_h -> SH')
+    input("-------- press Enter when ready ---------")
+    sleep(step_dwell)
+    k26.write('r50_hi, r50_lo = smu{chan}.contact.r()')
+    k26.write(f'smu{chan}.contact.calibratelo(r0_lo, {z_actual}, {r50_lo}, {r50_l})')
+    k26.write(f'smu{chan}.contact.calibratehi(r0_hi, {z_actual}, {r50_hi}, {r50_h})')
+
+def step5(k26, chan):
     if testmode: return
     today = dt.date.today()
-    k26.write(f'smu{chan}.cal.date = os.time{year={today.year}, month={today.month}, day={today.day}')
-#    k26.write(f'smu{chan}.cal.due= #optional?
+    k26.write(f'smu{chan}.cal.date = os.time(year={today.year}, month={today.month}, day={today.day})')
+    k26.write(f'smu{chan}.cal.due = os.time(year={today.year+1}, month={today.month}, day={today.day})')
     k26.write(f'smu{chan}.cal.save()')
     k26.write(f'smu{chan}.cal.lock()')
 
 def main():
     parser = argparse.ArgumentParser(description="K 2600 calibration script")
     parser.add_argument('-c', '--chan', required=True, help='select channel [a|b]')
-    parser.add_argument('-t', action='store_true', help='run in test mode')
+    parser.add_argument('-t', action='store_true', help='run in test mode, will not save cal')
     parser.add_argument('-l', '--log', type=argparse.FileType('w'), help='output log file')
     args = parser.parse_args(sys.argv[1:])
 
@@ -259,8 +275,10 @@ def main():
         print("bad channel, must be a or b")
         exit()
 
-    global logf = args.log
-    global testmode = args.t
+    global logf
+    logf = args.log
+    global testmode
+    testmode = args.t
 
     rm = pyvisa.ResourceManager()
     logf.write(f'start cal on {dt.datetime.now().isoformat()}, chan {args.chan}')
