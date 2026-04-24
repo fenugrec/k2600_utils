@@ -20,9 +20,11 @@
 # -check errors with *STB?
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
 
-import pyvisa
+#import pyvisa
+import ast
 import argparse
 import sys
+from time import sleep
 import datetime as dt
 from dataclasses import dataclass
 import configparser
@@ -35,7 +37,7 @@ class DynamicConfig:
 
         self._raw = conf
         for key, value in self._raw.items():
-            setattr(self, key, value)
+            setattr(self, key, ast.literal_eval(value))
 
 class DynamicConfigIni:
     def __init__(self, conf):
@@ -46,9 +48,25 @@ class DynamicConfigIni:
         for key, value in self._raw.items():
             setattr(self, key, DynamicConfig(dict(value.items())))
 
-global cfg
+## dummy pyvisa resources for offline testing
+class pyvisa_dummy():
+    def __init__(self, name):
+        self.name = name
+        self.val = 0    # dummy val for readings etc; increment on every query
+    def write(self, ws):
+        logf.write(f'{self.name}.write("{ws}")')
+    def query(self, qs):
+        logf.write(f'{self.name}.query("{qs}") => {self.val}')
+        self.val = self.val + 1
+        return f'{self.val}'
+    def query_ascii_values(self, qs):
+        logf.write(f'{self.name}.query_ascii_values("{qs}") => {self.val}')
+        self.val = self.val + 1
+        return [self.val]
 
 def open_k26(resman):
+    if testmode:
+        return pyvisa_dummy('k26_dummy')
     k26_res = resman.open_resource(cfg.dut.res)
     k26_res.baud_rate = cfg.dut.baud
     k26_res.flow_control = cfg.dut.flow
@@ -59,6 +77,8 @@ def open_k26(resman):
     return k26_res
 
 def open_dmm(resman):
+    if testmode:
+        return pyvisa_dummy('dmm_dummy')
     dmm = resman.open_resource(cfg.dmm.res)
     ids = dmm.query('*idn?')
     if not ids:
@@ -281,7 +301,7 @@ def step4(k26, chan):
     k26.write(f'smu{chan}.contact.calibratehi(r0_hi, {cfg.cal.r0_actual}, {r50_hi}, {cfg.cal.r50_h})')
 
 def step5(k26, chan):
-    if testmode: return
+    if dryrun: return
     today = dt.date.today()
     k26.write(f'smu{chan}.cal.date = os.time(year={today.year}, month={today.month}, day={today.day})')
     k26.write(f'smu{chan}.cal.due = os.time(year={today.year+1}, month={today.month}, day={today.day})')
@@ -292,12 +312,14 @@ def main():
     parser = argparse.ArgumentParser(description="K 2600 calibration script")
     parser.add_argument('-c', '--cfg', type=argparse.FileType('r'), required=True, help='config file')
     parser.add_argument('-s', '--chan', required=True, help='select channel [a|b]')
-    parser.add_argument('-t', action='store_true', help='dry run, will not save cal')
-    parser.add_argument('-l', '--log', type=argparse.FileType('w+'), help='output log file')
+    parser.add_argument('-n', action='store_true', help='dry run, will not save cal')
+    parser.add_argument('-t', action='store_true', help='test mode (dev)')
+    parser.add_argument('-l', '--log', type=argparse.FileType('wa'), help='output log file')
     args = parser.parse_args(sys.argv[1:])
 
     parser = configparser.ConfigParser()
     parser.read_file(args.cfg)
+    global cfg
     cfg = DynamicConfigIni(parser)
 
     if (args.chan != 'a') and (args.chan != 'b'):
@@ -306,26 +328,38 @@ def main():
 
     global logf
     logf = args.log
+    if logf is None:
+        logf=open('cal_tmp.log', 'w')
     global testmode
     testmode = args.t
+    global dryrun
+    dryrun = args.n
 
-    rm = pyvisa.ResourceManager()
+    if testmode:
+        rm = None
+    else:
+        rm = pyvisa.ResourceManager()
     logf.write(f'start cal on {dt.datetime.now().isoformat()}, SMU chan {args.chan}')
     logf.write(f'Using following parameters for cal:\n{cfg}')
 
-    if testmode:
-        logf.write(' ***************** test mode ! will not save cal ! ****************** ')
+    if dryrun:
+        logf.write(' ***************** dry run ! will not save cal ! ****************** ')
     print('******** STEP 1 (prep)')
     k26 = open_k26(rm)
     dmm = open_dmm(rm)
     k26_model = k26.query('print(localnode.model)')
     k26_sn = k26.query('print(localnode.serialno)')
     k26_rev = k26.query('print(localnode.revision)')
-    uptime = k26.query_ascii_values('print(os.clock())')
+    uptime = k26.query_ascii_values('print(os.clock())')[0]
     logf.write(f'connected to model {k26_model}, sn # {k26_sn}, rev {k26_rev}; uptime {uptime}')
     if uptime < (2 * 3600):
         print('******* WARNING **********')
         print(f'******* uptime ({uptime/60} minutes) below minimum recommended 2h **********')
+    step2(k26, dmm, args.chan)
+    step3(k26, dmm, args.chan)
+    step3b(k26, dmm, args.chan)
+    step4(k26, args.chan)
+    step5(k26, args.chan)
 
 if __name__ == '__main__':
     main()
