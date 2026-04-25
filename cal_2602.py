@@ -173,7 +173,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     calcmd = f'smu{chan}.source.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     k26.write(calcmd)
     logf.info('V cal step : ', calcmd)
-    if not sourceonly:
+    if not calstep.sourceonly:
         k26.write(f'smu{chan}.measure.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
     return
 
@@ -223,7 +223,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     k26.write(calcmd)
     logf.info('I cal step :', calcmd)
-    if not sourceonly:
+    if not calstep.sourceonly:
         k26.write(f'smu{chan}.measure.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
     return
 
