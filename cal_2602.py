@@ -4,16 +4,16 @@
 # for keithley 2602 SMU, should be easily tweakable for other 2600 series
 
 # **** usage:
-# - create/edit .conf file for connection settings and cal resistor values
+# - copy/edit .conf file for connection settings and cal resistor values
 # - customize dmm_* functions here as required
 # - dry-run to go through entire cal without saving to eeprom
 
 # **** code structure
 # - cal steps described in ref manual section 16, are implemented in functions 'step2' to 'step4';
-# - part of RM's step 3 (current ranges) is split to a step3b func since it requires different wiring and code
+# - part of step 3 (current ranges) is split to a step3b func since it requires different wiring and code
 # - main() near the end initializes stuff and includes step1
-# - dmm functions need to be customized to provide V and I readings, see dmm_read_v() and dmm_read_i()
-# - config is held in external cal.conf to avoid having to edit this script too much
+# - dmm functions need to be customized to provide V and I readings, see dmm_read_v(), dmm_config_v() etc
+# - general config is held in external cal.conf to ideally avoid having to edit this script at all
 
 # TODO :
 # -move dmm_* funcs to external file ?
@@ -32,6 +32,7 @@ import configparser
 
 # some config class magic, https://alexandra-zaharia.github.io/posts/python-configuration-and-dataclasses/
 # modified to use ast.literal_eval() to ~safely convert strings to numeric types when applicable
+# idea is to digest a ini-style .conf file into a class whose members can be used like 'cfg.dut.baud'
 class DynamicConfig:
     def __init__(self, conf):
         if not isinstance(conf, dict):
@@ -50,7 +51,7 @@ class DynamicConfigIni:
         for key, value in self._raw.items():
             setattr(self, key, DynamicConfig(dict(value.items())))
 
-## dummy pyvisa resources for offline testing
+## dummy pyvisa resources for offline debugging
 class pyvisa_dummy():
     def __init__(self, name):
         self.name = name
@@ -316,7 +317,7 @@ def main():
     parser.add_argument('-s', '--chan', required=True, help='select channel [a|b]')
     parser.add_argument('-n', action='store_true', help='dry run, will not save cal')
     parser.add_argument('-t', action='store_true', help='test mode (dev)')
-    parser.add_argument('-l', '--log', type=argparse.FileType('wa'), help='output log file')
+    parser.add_argument('-l', '--log', default='cal_tmp.log', help='output log file')
     args = parser.parse_args(sys.argv[1:])
 
     parser = configparser.ConfigParser()
@@ -331,10 +332,8 @@ def main():
     ## setup logging, test/debug options
     global logf
     logf = logging.getLogger()
-    logname = args.log
-    if logname is None:
-        logname = 'cal_tmp.log'
-    logging.basicConfig(filename=logname, filemode='w')
+        
+    logging.basicConfig(filename=args.log, filemode='w')
     global testmode
     testmode = args.t
     global dryrun
