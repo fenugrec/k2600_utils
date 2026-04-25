@@ -178,7 +178,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     return
 
 def step2(k26, dmm, chan):
-    print('******** STEP 2 (voltage) . Verify connections:')
+    print('\n******** STEP 2 (voltage) . Verify connections:')
     print('*** DMM_LO -> SL, and DMM_LO -> L')
     print('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
@@ -228,7 +228,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     return
 
 def step3(k26, dmm, chan):
-    print('******** STEP 3 (current <= 1A) . Verify connections:')
+    print('\n******** STEP 3 (current <= 1A) . Verify connections:')
     print('*** DMM_LO -> L')
     print('*** DMM_HI -> H')
     input("-------- press Enter when ready ---------")
@@ -278,7 +278,7 @@ def step3b_do_one(k26, dmm, chan, calstep, sign):
     return
 
 def step3b(k26, dmm, chan):
-    print('******** STEP 3B (current > 1A) . Verify connections (fig 16-3):')
+    print('\n******** STEP 3B (current > 1A) . Verify connections (fig 16-3):')
     print('*** DMM_LO -> 0R5 sense_L')
     print('*** DMM_HI -> 0R5 sense_H')
     print('*** SMU_L -> 0R5 L')
@@ -297,12 +297,12 @@ def step3b(k26, dmm, chan):
     k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_AUTO')
 
 def step4(k26, chan):
-    print('******** STEP 4 (contact 0) . Verify connections (fig 16-4):')
+    print('\n******** STEP 4 (contact 0) . Verify connections (fig 16-4):')
     print('*** no DMM; short L -> SL, and H -> SH')
     input("-------- press Enter when ready ---------")
     sleep(cfg.cal.step_dwell)
     k26.write('r0_hi, r0_lo = smu{chan}.contact.r()')
-    print('******** STEP 4 (contact 50R) . Verify connections (fig 16-5):')
+    print('\n******** STEP 4 (contact 50R) . Verify connections (fig 16-5):')
     print('*** no DMM; L -> 50R_l -> SL, and H -> 50R_h -> SH')
     input("-------- press Enter when ready ---------")
     sleep(cfg.cal.step_dwell)
@@ -357,7 +357,7 @@ def main():
 
     if dryrun:
         logf.info(' ***************** dry run ! will not save cal ! ****************** ')
-    print('******** STEP 1 (prep)')
+    print('\n******** STEP 1 (prep)')
     k26 = open_k26(rm)
     dmm = open_dmm(rm)
     k26_model = k26.query('print(localnode.model)')
@@ -373,7 +373,10 @@ def main():
     step3b(k26, dmm, args.chan)
     step4(k26, args.chan)
     if not dryrun:
-        step5(k26, args.chan)
+        print('\n******** STEP 5')
+        ans = input("-------- Save to EEPROM? y/Y to confirm, anything else cancels: ")
+        if ans == 'y' or ans == 'Y':
+            step5(k26, args.chan)
 
 if __name__ == '__main__':
     main()
