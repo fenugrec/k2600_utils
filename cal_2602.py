@@ -24,6 +24,7 @@
 import ast
 import argparse
 import sys
+import logging
 from time import sleep
 import datetime as dt
 from dataclasses import dataclass
@@ -55,13 +56,13 @@ class pyvisa_dummy():
         self.name = name
         self.val = 0    # dummy val for readings etc; increment on every query
     def write(self, ws):
-        logf.write(f"{self.name}.write('{ws}')")
+        logf.debug(f"{self.name}.write('{ws}')")
     def query(self, qs):
-        logf.write(f"{self.name}.query('{qs}') => {self.val}")
+        logf.debug(f"{self.name}.query('{qs}') => {self.val}")
         self.val = self.val + 1
         return f'{self.val}'
     def query_ascii_values(self, qs):
-        logf.write(f"{self.name}.query_ascii_values('{qs}') => {self.val}")
+        logf.debug(f"{self.name}.query_ascii_values('{qs}') => {self.val}")
         self.val = self.val + 1
         return [self.val]
 
@@ -97,10 +98,10 @@ def dmm_config_i(dmm):
     return
 
 def dmm_read_v(dmm):
-    return dmm.query_ascii_values(':whatsyourvoltage?')
+    return dmm.query_ascii_values(':whatsyourvoltage?')[0]
 
 def dmm_read_i(dmm):
-    return dmm.query_ascii_values(':whatsyouramps?')
+    return dmm.query_ascii_values(':whatsyouramps?')[0]
 
 ######## cal points
 #tweak according to 2601/02/11/12, 35/36 needs more work. Tables 16-2 etc
@@ -163,7 +164,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     calcmd = f'smu{chan}.source.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     k26.write(calcmd)
-    logf.write('V cal step : ', calcmd)
+    logf.info('V cal step : ', calcmd)
     if not sourceonly:
         k26.write(f'smu{chan}.measure.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
     return
@@ -213,7 +214,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     k26.write(calcmd)
-    logf.write('I cal step :', calcmd)
+    logf.info('I cal step :', calcmd)
     if not sourceonly:
         k26.write(f'smu{chan}.measure.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
     return
@@ -264,7 +265,7 @@ def step3b_do_one(k26, dmm, chan, calstep, sign):
     dmm_z = dmm_z_raw / cfg.cal.r5_actual
     dmm_fs = dmm_fs_raw / cfg.cal.r5_actual
     calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
-    logf.write(f'I cal step (dmm raw zero={dmm_z_raw}, fs={dmm_fs_raw}):', calcmd)
+    logf.info(f'I cal step (dmm raw zero={dmm_z_raw}, fs={dmm_fs_raw}):', calcmd)
     k26.write(calcmd)
     return
 
@@ -327,10 +328,13 @@ def main():
         print("bad channel, must be a or b")
         exit()
 
+    ## setup logging, test/debug options
     global logf
-    logf = args.log
-    if logf is None:
-        logf=open('cal_tmp.log', 'w')
+    logf = logging.getLogger()
+    logname = args.log
+    if logname is None:
+        logname = 'cal_tmp.log'
+    logging.basicConfig(filename=logname, filemode='w')
     global testmode
     testmode = args.t
     global dryrun
@@ -338,13 +342,16 @@ def main():
 
     if testmode:
         rm = None
+        logf.setLevel(logging.DEBUG)
     else:
         rm = pyvisa.ResourceManager()
-    logf.write(f'start cal on {dt.datetime.now().isoformat()}, SMU chan {args.chan}')
-    logf.write(f'Using following parameters for cal:\n{cfg}')
+
+    ## start cal process
+    logf.info(f'start cal on {dt.datetime.now().isoformat()}, SMU chan {args.chan}')
+    logf.info(f'Using following parameters for cal:\n{cfg}')
 
     if dryrun:
-        logf.write(' ***************** dry run ! will not save cal ! ****************** ')
+        logf.info(' ***************** dry run ! will not save cal ! ****************** ')
     print('******** STEP 1 (prep)')
     k26 = open_k26(rm)
     dmm = open_dmm(rm)
@@ -352,7 +359,7 @@ def main():
     k26_sn = k26.query('print(localnode.serialno)')
     k26_rev = k26.query('print(localnode.revision)')
     uptime = k26.query_ascii_values('print(os.clock())')[0]
-    logf.write(f'connected to model {k26_model}, sn # {k26_sn}, rev {k26_rev}; uptime {uptime}')
+    logf.info(f'connected to model {k26_model}, sn # {k26_sn}, rev {k26_rev}; uptime {uptime}')
     if uptime < (2 * 3600):
         print('******* WARNING **********')
         print(f'******* uptime ({uptime/60} minutes) below minimum recommended 2h **********')
