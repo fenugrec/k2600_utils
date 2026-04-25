@@ -304,7 +304,6 @@ def step4(k26, chan):
     k26.write(f'smu{chan}.contact.calibratehi(r0_hi, {cfg.cal.r0_actual}, {r50_hi}, {cfg.cal.r50_h})')
 
 def step5(k26, chan):
-    if dryrun: return
     today = dt.date.today()
     k26.write(f'smu{chan}.cal.date = os.time(year={today.year}, month={today.month}, day={today.day})')
     k26.write(f'smu{chan}.cal.due = os.time(year={today.year+1}, month={today.month}, day={today.day})')
@@ -336,7 +335,6 @@ def main():
     logging.basicConfig(filename=args.log, filemode='w')
     global testmode
     testmode = args.t
-    global dryrun
     dryrun = args.n
 
     if testmode:
@@ -366,7 +364,8 @@ def main():
     step3(k26, dmm, args.chan)
     step3b(k26, dmm, args.chan)
     step4(k26, args.chan)
-    step5(k26, args.chan)
+    if not dryrun:
+        step5(k26, args.chan)
 
 if __name__ == '__main__':
     main()
