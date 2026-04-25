@@ -307,8 +307,8 @@ def step4(k26, chan):
     input("-------- press Enter when ready ---------")
     sleep(cfg.cal.step_dwell)
     k26.write('r50_hi, r50_lo = smu{chan}.contact.r()')
-    k26.write(f'smu{chan}.contact.calibratelo(r0_lo, {cfg.cal.r0_actual}, {r50_lo}, {cfg.cal.r50_l})')
-    k26.write(f'smu{chan}.contact.calibratehi(r0_hi, {cfg.cal.r0_actual}, {r50_hi}, {cfg.cal.r50_h})')
+    k26.write(f'smu{chan}.contact.calibratelo(r0_lo, {cfg.cal.r0_actual}, r50_lo, {cfg.cal.r50_l})')
+    k26.write(f'smu{chan}.contact.calibratehi(r0_hi, {cfg.cal.r0_actual}, r50_hi, {cfg.cal.r50_h})')
 
 def step5(k26, chan):
     today = dt.date.today()
