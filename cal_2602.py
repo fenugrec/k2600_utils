@@ -21,14 +21,14 @@
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
 
 #import pyvisa
-import ast
 import argparse
-import sys
-import logging
-from time import sleep
-import datetime as dt
-from dataclasses import dataclass
+import ast
 import configparser
+from dataclasses import dataclass
+import datetime as dt
+import logging
+import sys
+from time import sleep
 
 # some config class magic, https://alexandra-zaharia.github.io/posts/python-configuration-and-dataclasses/
 # modified to use ast.literal_eval() to ~safely convert strings to numeric types when applicable
@@ -50,6 +50,13 @@ class DynamicConfigIni:
         self._raw = conf
         for key, value in self._raw.items():
             setattr(self, key, DynamicConfig(dict(value.items())))
+
+# helper func to pretty print config tree
+def log_configtree(logger, parser: configparser):
+    for sec in parser.sections():
+        for key in parser[sec]:
+            rawval = parser[sec][key]
+            logger.info(f'\t{sec}.{key}={rawval}')
 
 ## dummy pyvisa resources for offline debugging
 class pyvisa_dummy():
@@ -345,7 +352,8 @@ def main():
 
     ## start cal process
     logf.info(f'start cal on {dt.datetime.now().isoformat()}, SMU chan {args.chan}')
-    logf.info(f'Using following parameters for cal:\n{cfg}')
+    logf.info(f'Using following parameters for cal:')
+    log_configtree(logf, parser)
 
     if dryrun:
         logf.info(' ***************** dry run ! will not save cal ! ****************** ')
