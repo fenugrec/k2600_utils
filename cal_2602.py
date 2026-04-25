@@ -172,7 +172,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     calcmd = f'smu{chan}.source.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     k26.write(calcmd)
-    logf.info('V cal step : ', calcmd)
+    logf.info('V cal step : ' + calcmd)
     if not calstep.sourceonly:
         k26.write(f'smu{chan}.measure.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
     return
@@ -187,7 +187,7 @@ def step2(k26, dmm, chan):
     f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS'
     dmm_config_v(dmm)
     for calstep in vcalsteps:
-        print(f'V cal range {calstep.range}, setpoint {calstep.setpoint}')
+        print(f'V cal step: {calstep}')
         k26.write(f'smu{chan}.source.rangev = {calstep.range}')
         k26.write(f'smu{chan}.sense = {calstep.sensemode}')
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_POSITIVE')
@@ -222,7 +222,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     k26.write(calcmd)
-    logf.info('I cal step :', calcmd)
+    logf.info('I cal step : ' + calcmd)
     if not calstep.sourceonly:
         k26.write(f'smu{chan}.measure.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
     return
@@ -235,7 +235,7 @@ def step3(k26, dmm, chan):
     f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS'
     dmm_config_i(dmm)
     for calstep in icalsteps:
-        print(f'I cal range {calstep.range}, setpoint {calstep.setpoint}')
+        print(f'I cal step: {calstep}')
         k26.write(f'smu{chan}.source.rangei = {calstep.range}')
         k26.write(f'smu{chan}.sense = {calstep.sensemode}')
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_POSITIVE')
@@ -273,7 +273,7 @@ def step3b_do_one(k26, dmm, chan, calstep, sign):
     dmm_z = dmm_z_raw / cfg.cal.r5_actual
     dmm_fs = dmm_fs_raw / cfg.cal.r5_actual
     calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
-    logf.info(f'I cal step (dmm raw zero={dmm_z_raw}, fs={dmm_fs_raw}):', calcmd)
+    logf.info(f'I cal step (dmm raw zero={dmm_z_raw}, fs={dmm_fs_raw}): ' + calcmd)
     k26.write(calcmd)
     return
 
@@ -286,7 +286,7 @@ def step3b(k26, dmm, chan):
     input("-------- press Enter when ready ---------")
     dmm_config_v(dmm)
     for calstep in icalsteps_hi:
-        print(f'I cal range {calstep.range}, setpoint {calstep.setpoint}')
+        print(f'I cal step: {calstep}')
         k26.write(f'smu{chan}.source.rangei = {calstep.range}')
         k26.write(f'smu{chan}.sense = {calstep.sensemode}')
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_POSITIVE')
