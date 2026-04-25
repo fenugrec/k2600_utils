@@ -290,9 +290,9 @@ def step3b(k26, dmm, chan):
         k26.write(f'smu{chan}.source.rangei = {calstep.range}')
         k26.write(f'smu{chan}.sense = {calstep.sensemode}')
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_POSITIVE')
-        step3_do_one(k26, dmm, chan, calstep, 1)
+        step3b_do_one(k26, dmm, chan, calstep, 1)
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_NEGATIVE')
-        step3_do_one(k26, dmm, chan, calstep, -1)
+        step3b_do_one(k26, dmm, chan, calstep, -1)
     print('***** step 3 (hi current ranges) done ****')
     k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_AUTO')
 
