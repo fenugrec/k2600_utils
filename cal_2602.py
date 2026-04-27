@@ -16,6 +16,7 @@
 # - general config is held in external cal.conf to ideally avoid having to edit this script at all
 
 # TODO :
+# -tweak logger to output to file as well as print
 # -move dmm_* funcs to external file ?
 # -check errors with *STB?
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
