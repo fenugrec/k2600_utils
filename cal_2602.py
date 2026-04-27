@@ -170,9 +170,11 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'fs_rdg = smu{chan}.measure.v()')
     dmm_fs = dmm_read_v(dmm)
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
+    smu_z = k26.query_ascii_values(f'print(z_rdg)')[0]
+    smu_fs = k26.query_ascii_values(f'print(fs_rdg)')[0]
     calcmd = f'smu{chan}.source.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     k26.write(calcmd)
-    logf.info('V cal step : ' + calcmd)
+    logf.info(f'V cal step : range={vrange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
     if not calstep.sourceonly:
         k26.write(f'smu{chan}.measure.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
     return
@@ -220,9 +222,11 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'fs_rdg = smu{chan}.measure.i()')
     dmm_fs = dmm_read_i(dmm)
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
+    smu_z = k26.query_ascii_values(f'print(z_rdg)')[0]
+    smu_fs = k26.query_ascii_values(f'print(fs_rdg)')[0]
     calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     k26.write(calcmd)
-    logf.info('I cal step : ' + calcmd)
+    logf.info(f'I cal step : range={irange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
     if not calstep.sourceonly:
         k26.write(f'smu{chan}.measure.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
     return
