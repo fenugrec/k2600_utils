@@ -182,6 +182,7 @@ def step2(k26, dmm, chan):
     print('*** DMM_LO -> SL, and DMM_LO -> L')
     print('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
+    logf.info('\n STEP 2')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
     k26.write(f'smu{chan}.sense = smu{chan}.SENSE_REMOTE')
     dmm_config_v(dmm)
@@ -228,6 +229,7 @@ def step3(k26, dmm, chan):
     print('*** DMM_LO -> SL, and DMM_LO -> L')
     print('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
+    logf.info('\n STEP 3')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
     k26.write(f'smu{chan}.sense = smu{chan}.SENSE_REMOTE')
     dmm_config_v(dmm)
@@ -265,6 +267,7 @@ def step4(k26, dmm, chan):
     print('*** DMM_LO -> L')
     print('*** DMM_HI -> H')
     input("-------- press Enter when ready ---------")
+    logf.info('\n STEP 4')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm_config_i(dmm)
     for pvstep in k2602_limits.isource_points:
@@ -311,6 +314,7 @@ def step5(k26, dmm, chan):
     print('*** DMM_LO -> SL, and DMM_LO -> L')
     print('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
+    logf.info('\n STEP 5')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm_config_v(dmm)
     for pvstep in k2602_limits.imeas_points:
@@ -352,6 +356,7 @@ def step6(k26, dmm, chan):
     print('*** SMU_L -> 0R5 L')
     print('*** SMU_H -> 0R5 H')
     input("-------- press Enter when ready ---------")
+    logf.info('\n STEP 6')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm_config_v(dmm)
     for pvstep in k2602_limits.isource_hi_points:
@@ -401,12 +406,13 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
 
 #step7 : high I meas accu test; p. 15-14
 def step7(k26, dmm, chan):
-    print('\n******** STEP 8 (I meas > 1A) . Verify connections (fig 15-3):')
+    print('\n******** STEP 7 (I meas > 1A) . Verify connections (fig 15-3):')
     print('*** DMM_LO -> 0R5 sense_L')
     print('*** DMM_HI -> 0R5 sense_H')
     print('*** SMU_L -> 0R5 L')
     print('*** SMU_H -> 0R5 H')
     input("-------- press Enter when ready ---------")
+    logf.info('\n STEP 7')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm_config_v(dmm)
     for pvstep in k2602_limits.imeas_hi_points:
@@ -473,6 +479,9 @@ def main():
     step5(k26, dmm, args.chan)
     step6(k26, dmm, args.chan)
     step7(k26, dmm, args.chan)
+    logf.info(f'\n*********** DONE *********')
+    k26.write('abort') #return to local
+
 
 if __name__ == '__main__':
     main()
