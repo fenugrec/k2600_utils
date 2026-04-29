@@ -5,23 +5,21 @@
 
 # **** usage:
 # - copy/edit .conf file for connection settings and cal resistor values
-# - customize dmm_* functions here as required
+# - customize dmm.py as required for DMM to be used
 # - dry-run to go through entire cal without saving to eeprom
 
 # **** code structure
 # - cal steps described in ref manual section 16, are implemented in functions 'step2' to 'step4';
 # - part of step 3 (current ranges) is split to a step3b func since it requires different wiring and code
 # - main() near the end initializes stuff and includes step1
-# - dmm functions need to be customized to provide V and I readings, see dmm_read_v(), dmm_config_v() etc
 # - general config is held in external cal.conf to ideally avoid having to edit this script at all
 
 # TODO :
 # -tweak logger to output to file as well as print
-# -move dmm_* funcs to external file ?
 # -check errors with *STB?
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
 
-#import pyvisa
+import pyvisa
 import argparse
 import ast
 import configparser
@@ -30,6 +28,7 @@ import datetime as dt
 import logging
 import sys
 from time import sleep
+from dmm import *
 
 # some config class magic, https://alexandra-zaharia.github.io/posts/python-configuration-and-dataclasses/
 # modified to use ast.literal_eval() to ~safely convert strings to numeric types when applicable
@@ -70,14 +69,16 @@ class pyvisa_dummy():
         logf.debug(f"{self.name}.query('{qs}') => {self.val}")
         self.val = self.val + 1
         return f'{self.val}'
+    def read_ascii_values(self):
+        logf.debug(f"{self.name}.read_ascii_values() => {self.val}")
+        self.val = self.val + 1
+        return [self.val]
     def query_ascii_values(self, qs):
         logf.debug(f"{self.name}.query_ascii_values('{qs}') => {self.val}")
         self.val = self.val + 1
         return [self.val]
 
 def open_k26(resman):
-    if testmode:
-        return pyvisa_dummy('k26_dummy')
     k26_res = resman.open_resource(cfg.dut.res)
     k26_res.baud_rate = cfg.dut.baud
     k26_res.flow_control = cfg.dut.flow
@@ -86,31 +87,6 @@ def open_k26(resman):
         print("ID query mismatch")
         quit()
     return k26_res
-
-def open_dmm(resman):
-    if testmode:
-        return pyvisa_dummy('dmm_dummy')
-    dmm = resman.open_resource(cfg.dmm.res)
-    ids = dmm.query('*idn?')
-    if not ids:
-        print("no DMM ?")
-        quit()
-    print(f"connected to DMM:\n{ids}")
-    return dmm
-
-# set whatever necessary to measure volts
-def dmm_config_v(dmm):
-    return
-
-# set whatever necessary to measure up to 1A
-def dmm_config_i(dmm):
-    return
-
-def dmm_read_v(dmm):
-    return dmm.query_ascii_values(':whatsyourvoltage?')[0]
-
-def dmm_read_i(dmm):
-    return dmm.query_ascii_values(':whatsyouramps?')[0]
 
 ######## cal points
 #tweak according to 2601/02/11/12, 35/36 needs more work. Tables 16-2 etc
@@ -350,10 +326,13 @@ def main():
     dryrun = args.n
 
     if testmode:
-        rm = None
+        dmm = pyvisa_dummy('dmm_dummy')
+        k26 = pyvisa_dummy('k26_dummy')
         logf.setLevel(logging.DEBUG)
     else:
         rm = pyvisa.ResourceManager()
+        k26 = open_k26(rm)
+        dmm = dmm_open(rm)
 
     ## start cal process
     logf.info(f'start cal on {dt.datetime.now().isoformat()}, SMU chan {args.chan}')
@@ -363,8 +342,6 @@ def main():
     if dryrun:
         logf.info(' ***************** dry run ! will not save cal ! ****************** ')
     print('\n******** STEP 1 (prep)')
-    k26 = open_k26(rm)
-    dmm = open_dmm(rm)
     k26_model = k26.query('print(localnode.model)')
     k26_sn = k26.query('print(localnode.serialno)')
     k26_rev = k26.query('print(localnode.revision)')
