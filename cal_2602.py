@@ -345,11 +345,11 @@ def main():
     k26_model = k26.query('print(localnode.model)')
     k26_sn = k26.query('print(localnode.serialno)')
     k26_rev = k26.query('print(localnode.revision)')
-    uptime = k26.query_ascii_values('print(os.clock())')[0]
-    logf.info(f'connected to model {k26_model}, sn # {k26_sn}, rev {k26_rev}; uptime {uptime}')
-    if uptime < (2 * 3600):
+    uptime = round(k26.query_ascii_values('print(os.clock())')[0]/60)
+    logf.info(f'connected to model {k26_model}, sn # {k26_sn}, rev {k26_rev}; uptime {uptime} min.')
+    if uptime < (2 * 60):
         print('******* WARNING **********')
-        print(f'******* uptime ({uptime/60} minutes) below minimum recommended 2h **********')
+        print(f'******* uptime ({uptime} minutes) below minimum recommended 2h **********')
     step2(k26, dmm, args.chan)
     step3(k26, dmm, args.chan)
     step3b(k26, dmm, args.chan)
