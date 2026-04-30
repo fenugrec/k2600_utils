@@ -6,6 +6,8 @@
 # - common funcs for performance verif and cal
 # - eventually could wrap around pyvisa resource to better handle logging some/all commands passthru
 
+from statistics import median, stdev
+
 # check errors in STB and print
 def k26_get_errors(res):
     n = res.query_ascii_values('print(errorqueue.count)')[0]
@@ -22,3 +24,17 @@ def k26_get_errors(res):
     if (stb & 4):
         print(f'**** errors still present !')
         quit()
+
+# given an arbitrary func that returns one val, take readings and compute stats
+class read_multi():
+    def __init__(self, readfunc, discard, keep, logfunc):
+        raw = []
+        for i in range(0, discard + keep):
+            raw.append(readfunc())
+        filtered = raw[-keep:]
+        self.median=median(filtered)
+        self.stdev=stdev(filtered)
+        self.raw_rdg = raw
+        self.filtered = filtered
+        logfunc(f'discarded {discard}, kept {keep} readings; median={self.median:.7g} stdev={self.stdev:.7g} raw={raw}')
+

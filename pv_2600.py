@@ -160,7 +160,7 @@ def step2_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.levelv = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.step_dwell)
-    dmm_rdg = dmm.read_v()
+    dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.info).median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
     print_result(vrange, target, dmm_rdg, delta, pvstep.tol)
@@ -197,14 +197,15 @@ def step3_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.levelv = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.step_dwell)
-    dmm_rdg = dmm.read_v()
+    dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.info).median
     delta = dmm_rdg - target
     logf.info(f'V meas initial: range={vrange} tgt={target} rdg={dmm_rdg} delta={delta}')
+
     # adjust SMU once, should be 'close enough'
     k26.write(f'smu{chan}.source.levelv = {target - delta}')
     sleep(cfg.pv.step_dwell)
     smu_rdg = k26.query_ascii_values(f'print(smu{chan}.measure.v())')[0]
-    dmm_rdg = dmm.read_v()
+    dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.info).median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - smu_rdg
     logf.info(f'V meas final: range={vrange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
@@ -245,7 +246,7 @@ def step4_do_one(k26, dmm, chan, pvstep, sign):
         dwell = cfg.pv.step_dwell
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(dwell)
-    dmm_rdg = dmm.read_i()
+    dmm_rdg = read_multi(dmm.read_i, cfg.pv.discard_i, cfg.pv.keep_i, logf.info).median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
     print_result(irange, target, dmm_rdg, delta, pvstep.tol)
@@ -286,7 +287,7 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     # use configurable dwell only first time ?
     sleep(dwell)
-    dmm_rdg = dmm.read_i()
+    dmm_rdg = read_multi(dmm.read_i, cfg.pv.discard_i, cfg.pv.keep_i, logf.info).median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
     logf.info(f'I meas initial: range={irange} tgt={target} rdg={dmm_rdg} delta={delta}')
@@ -332,7 +333,7 @@ def step6_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.leveli = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
-    dmm_raw = dmm.read_v()
+    dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.info).median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
@@ -373,7 +374,7 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.leveli = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
-    dmm_raw = dmm.read_v()
+    dmm_raw = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.info).median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
@@ -384,7 +385,7 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.leveli = {target - delta}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
-    dmm_raw = dmm.read_v()
+    dmm_raw = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.info).median
     smu_rdg = k26.query_ascii_values(f'print(smu{chan}.measure.i())')[0]
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
