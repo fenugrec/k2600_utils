@@ -328,7 +328,7 @@ def step6_do_one(k26, dmm, chan, pvstep, sign):
     else:
         irange = -pvstep.range
         target = -pvstep.target
-    dmm.range_i(target)
+    dmm.range_v(target * cfg.pv.r5_actual)
     k26.write(f'smu{chan}.source.leveli = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
@@ -369,7 +369,7 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     else:
         irange = -pvstep.range
         target = -pvstep.target
-    dmm.range_i(target)
+    dmm.range_v(target * cfg.pv.r5_actual)
     k26.write(f'smu{chan}.source.leveli = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
