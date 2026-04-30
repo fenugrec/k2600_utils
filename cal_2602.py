@@ -274,6 +274,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     logf.info(f'I cal step (dmm raw zero={dmm_z_raw}, fs={dmm_fs_raw}): ' + calcmd)
     k26.write(calcmd)
+    k26.write(f'smu{chan}.measure.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
     k26_get_errors(k26)
     return
 
