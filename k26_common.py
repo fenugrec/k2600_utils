@@ -17,6 +17,8 @@ def k26_get_errors(res):
         print(f'**** K26 ERROR {ec}: {em}')
         n = n -1
     stb = int(res.query_ascii_values('*STB?')[0])
+    # bit 2 (0x04) is 'EAV - Error Available'; should now be clear unless some other errors appeared
+    # while retrieving the first set. Bad news
     if (stb & 4):
         print(f'**** errors still present !')
         quit()
