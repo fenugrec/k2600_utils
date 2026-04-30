@@ -79,7 +79,7 @@ def open_k26(resman):
     k26_res.baud_rate = cfg.dut.baud
     k26_res.flow_control = pyvisa.constants.ControlFlow[cfg.dut.flow]
     idstring = k26_res.query('*idn?')
-    if not idstring.contains('2602'):
+    if '2602' not in idstring:
         print("ID query mismatch")
         quit()
     return k26_res
@@ -165,9 +165,7 @@ def step2(k26, dmm, chan):
     dmm_config_v(dmm)
     for pvstep in k2602_limits.vsource_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
-        k26.write(f'smu{chan}.pv.polarity = smu{chan}.pv_POSITIVE')
         step2_do_one(k26, dmm, chan, pvstep, 1)
-        k26.write(f'smu{chan}.pv.polarity = smu{chan}.pv_NEGATIVE')
         step2_do_one(k26, dmm, chan, pvstep, -1)
     return
 
@@ -212,9 +210,7 @@ def step3(k26, dmm, chan):
     dmm_config_v(dmm)
     for pvstep in k2602_limits.vmeas_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
-        k26.write(f'smu{chan}.pv.polarity = smu{chan}.pv_POSITIVE')
         step3_do_one(k26, dmm, chan, pvstep, 1)
-        k26.write(f'smu{chan}.pv.polarity = smu{chan}.pv_NEGATIVE')
         step3_do_one(k26, dmm, chan, pvstep, -1)
     return
 
@@ -249,9 +245,7 @@ def step4(k26, dmm, chan):
     dmm_config_i(dmm)
     for pvstep in k2602_limits.isource_points:
         k26.write(f'smu{chan}.source.rangei = {pvstep.range}')
-        k26.write(f'smu{chan}.pv.polarity = smu{chan}.pv_POSITIVE')
         step4_do_one(k26, dmm, chan, pvstep, 1)
-        k26.write(f'smu{chan}.pv.polarity = smu{chan}.pv_NEGATIVE')
         step4_do_one(k26, dmm, chan, pvstep, -1)
     return
 
@@ -296,9 +290,7 @@ def step5(k26, dmm, chan):
     dmm_config_v(dmm)
     for pvstep in k2602_limits.imeas_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
-        k26.write(f'smu{chan}.pv.polarity = smu{chan}.pv_POSITIVE')
         step5_do_one(k26, dmm, chan, pvstep, 1)
-        k26.write(f'smu{chan}.pv.polarity = smu{chan}.pv_NEGATIVE')
         step5_do_one(k26, dmm, chan, pvstep, -1)
     return
 
@@ -338,9 +330,7 @@ def step6(k26, dmm, chan):
     dmm_config_v(dmm)
     for pvstep in k2602_limits.isource_hi_points:
         k26.write(f'smu{chan}.source.rangei = {pvstep.range}')
-        k26.write(f'smu{chan}.pv.polarity = smu{chan}.pv_POSITIVE')
         step6_do_one(k26, dmm, chan, pvstep, 1)
-        k26.write(f'smu{chan}.pv.polarity = smu{chan}.pv_NEGATIVE')
         step6_do_one(k26, dmm, chan, pvstep, -1)
     return
 
@@ -394,9 +384,7 @@ def step7(k26, dmm, chan):
     dmm_config_v(dmm)
     for pvstep in k2602_limits.imeas_hi_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
-        k26.write(f'smu{chan}.pv.polarity = smu{chan}.pv_POSITIVE')
         step7_do_one(k26, dmm, chan, pvstep, 1)
-        k26.write(f'smu{chan}.pv.polarity = smu{chan}.pv_NEGATIVE')
         step7_do_one(k26, dmm, chan, pvstep, -1)
     return
 
@@ -432,7 +420,8 @@ def main():
     else:
         rm = pyvisa.ResourceManager()
         k26 = open_k26(rm)
-        dmm = dmm_open(rm)
+        dmm = dmm_open(rm, cfg.dmm.res)
+        logf.setLevel(logging.INFO)
 
     ## start cal process
     logf.info(f'start PV on {dt.datetime.now().isoformat()}, SMU chan {args.chan}')

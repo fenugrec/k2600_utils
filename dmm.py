@@ -7,8 +7,9 @@
 # example code for hp3478a
 import pyvisa
 
-def dmm_open(resman):
-    dmm = resman.open_resource(cfg.dmm.res)
+def dmm_open(resman, res):
+    dmm = resman.open_resource(res)
+    ids = ''
 #    ids = dmm.query('*idn?')
     if 0:
 #    if not ids:

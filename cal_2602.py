@@ -83,7 +83,7 @@ def open_k26(resman):
     k26_res.baud_rate = cfg.dut.baud
     k26_res.flow_control = pyvisa.constants.ControlFlow[cfg.dut.flow]
     idstring = k26_res.query('*idn?')
-    if not idstring.contains('2602'):
+    if '2602' not in idstring:
         print("ID query mismatch")
         quit()
     return k26_res
@@ -332,7 +332,7 @@ def main():
     else:
         rm = pyvisa.ResourceManager()
         k26 = open_k26(rm)
-        dmm = dmm_open(rm)
+        dmm = dmm_open(rm, cfg.dmm.res)
 
     ## start cal process
     logf.info(f'start cal on {dt.datetime.now().isoformat()}, SMU chan {args.chan}')
