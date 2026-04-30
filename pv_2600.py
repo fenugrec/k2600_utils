@@ -128,8 +128,8 @@ class k2602_limits():
             pvstep(100e-6, 90e-6, 57e-9),
             pvstep(1e-3, 900e-6, 470e-9),
             pvstep(10e-3, 9e-3, 5.7e-6),
-            pvstep(100e-3, 90e-3, 47e-6, config_dwell='dly_100ma'),
-            pvstep(1, 900e-3, 1.35e-6, config_dwell='dly_1a'),
+            pvstep(100e-3, 90e-3, 47e-6, config_dwell='dly_100mA'),
+            pvstep(1, 900e-3, 1.35e-6, config_dwell='dly_1A'),
             ]
     isource_hi_points = [
             pvstep(3, 2.4, 2.94e-3),
@@ -141,8 +141,8 @@ class k2602_limits():
             pvstep(100e-6, 90e-6, 43e-9),
             pvstep(1e-3, 900e-6, 380e-9),
             pvstep(10e-3, 9e-3, 4.3e-6),
-            pvstep(100e-3, 90e-3, 38e-6, config_dwell='dly_100ma'),
-            pvstep(1, 900e-3, 1.77e-3, config_dwell='dly_1a'),
+            pvstep(100e-3, 90e-3, 38e-6, config_dwell='dly_100mA'),
+            pvstep(1, 900e-3, 1.77e-3, config_dwell='dly_1A'),
             ]
     imeas_hi_points = [
             pvstep(3, 2.4, 4.7e-3),
@@ -437,6 +437,7 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     parser = configparser.ConfigParser()
+    parser.optionxform = lambda option: option  # hax to make config case-sensitive instead of force-lowercase
     parser.read_file(args.cfg)
     global cfg
     cfg = DynamicConfigIni(parser)

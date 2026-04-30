@@ -17,7 +17,6 @@
 
 # TODO :
 # -tweak logger to output to file as well as print
-# -case-sensitive configparser instead of force-lowercase
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
 # -unify config naming of ipulse_ton etc vs config_dwell
 
@@ -120,8 +119,8 @@ class k2602_points():
             calstep(1e-3, 1e-10, 900e-6, 'SENSE_LOCAL'),
             calstep(1e-3, 1e-10, 900e-6, 'SENSE_CALA', sourceonly=True),
             calstep(10e-3, 1e-10, 9e-3, 'SENSE_LOCAL'),
-            calstep(100e-3, 1e-10, 90e-3, 'SENSE_LOCAL', config_dwell='dly_100ma'),
-            calstep(1, 1e-10, 900e-3, 'SENSE_LOCAL', config_dwell='dly_1a'),
+            calstep(100e-3, 1e-10, 90e-3, 'SENSE_LOCAL', config_dwell='dly_100mA'),
+            calstep(1, 1e-10, 900e-3, 'SENSE_LOCAL', config_dwell='dly_1A'),
             ]
     icalsteps_hi = [
             calstep(3, 1e-10, 2.4, 'SENSE_LOCAL'),
@@ -330,6 +329,7 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     parser = configparser.ConfigParser()
+    parser.optionxform = lambda option: option  # hax to make config case-sensitive instead of force-lowercase
     parser.read_file(args.cfg)
     global cfg
     cfg = DynamicConfigIni(parser)
