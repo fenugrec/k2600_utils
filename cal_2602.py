@@ -146,13 +146,13 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     sleep(cfg.cal.step_dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
     k26.write(f'z_rdg = smu{chan}.measure.v()')
-    dmm_z = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info).median
+    dmm_z = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.levelv = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.step_dwell)
     k26.write(f'fs_rdg = smu{chan}.measure.v()')
-    dmm_fs = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info).median
+    dmm_fs = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     smu_z = k26.query_ascii_values(f'print(z_rdg)')[0]
     smu_fs = k26.query_ascii_values(f'print(fs_rdg)')[0]
@@ -203,14 +203,14 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     sleep(dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
     k26.write(f'z_rdg = smu{chan}.measure.i()')
-    dmm_z = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.info).median
+    dmm_z = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.leveli = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
 # use default dwell here since we presumably settled everything already?
     sleep(cfg.cal.step_dwell)
     k26.write(f'fs_rdg = smu{chan}.measure.i()')
-    dmm_fs = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.info).median
+    dmm_fs = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     smu_z = k26.query_ascii_values(f'print(z_rdg)')[0]
     smu_fs = k26.query_ascii_values(f'print(fs_rdg)')[0]
@@ -256,13 +256,13 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
     k26.write(f'z_rdg = smu{chan}.measure.i()')
-    dmm_z_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info).median
+    dmm_z_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.leveli = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
     k26.write(f'fs_rdg = smu{chan}.measure.i()')
-    dmm_fs_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info).median
+    dmm_fs_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
     sleep(cfg.cal.ipulse_toff)

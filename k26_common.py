@@ -27,7 +27,7 @@ def k26_get_errors(res):
 
 # given an arbitrary func that returns one val, take readings and compute stats
 class read_multi():
-    def __init__(self, readfunc, discard, keep, logfunc):
+    def __init__(self, readfunc, discard, keep, logfunc, prefix=''):
         raw = []
         for i in range(0, discard + keep):
             raw.append(readfunc())
@@ -36,5 +36,5 @@ class read_multi():
         self.stdev=stdev(filtered)
         self.raw_rdg = raw
         self.filtered = filtered
-        logfunc(f'discarded {discard}, kept {keep} readings; median={self.median:.7g} stdev={self.stdev:.7g} raw={raw}')
+        logfunc(f'[{prefix}] discarded {discard}, kept {keep} readings; median={self.median:.7g} stdev={self.stdev:.7g} raw={raw}')
 
