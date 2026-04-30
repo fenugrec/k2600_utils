@@ -7,11 +7,13 @@
 # - copy/edit .conf file for connection settings and cal resistor values
 # - customize dmm.py as required for DMM to be used
 # - dry-run to go through entire cal without saving to eeprom
+# - can run individual 'steps' and test points
 
 # **** code structure
 # - cal steps described in ref manual section 16, are implemented in functions 'step2' to 'step7';
 # - part of step 3 (current ranges) is split since it requires different wiring and code,
 #   and the numbering of steps no longer matches the refman.
+# - A bit of confusion between 'steps' i.e. ref manual steps, and individual test points per range
 # - main() near the end initializes stuff and includes step1
 # - general config is held in external cal.conf to ideally avoid having to edit this script at all
 
@@ -162,21 +164,24 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     k26_get_errors(k26)
     return
 
-def step2(k26, dmm, chan):
+def step2(k26, dmm, chan, point=None):
     print('\n******** STEP 2 (voltage) . Verify connections:')
     print('*** DMM_LO -> SL, and DMM_LO -> L')
     print('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
     dmm.config_v()
-    for calstep in k2602_points.vcalsteps:
-        print(f'V cal step: {calstep}')
-        k26.write(f'smu{chan}.source.rangev = {calstep.range}')
-        k26.write(f'smu{chan}.sense = {calstep.sensemode}')
+    points = k2602_points.vcalsteps
+    if point in range(0, len(points)):
+        points = [points[point]]
+    for calpoint in points:
+        print(f'V cal point: {calpoint}')
+        k26.write(f'smu{chan}.source.rangev = {calpoint.range}')
+        k26.write(f'smu{chan}.sense = {calpoint.sensemode}')
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_POSITIVE')
-        step2_do_one(k26, dmm, chan, calstep, 1)
+        step2_do_one(k26, dmm, chan, calpoint, 1)
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_NEGATIVE')
-        step2_do_one(k26, dmm, chan, calstep, -1)
+        step2_do_one(k26, dmm, chan, calpoint, -1)
     print('***** step 2 (voltage ranges) done ****')
     k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_AUTO')
     return
@@ -220,23 +225,27 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     k26_get_errors(k26)
     return
 
-def step3(k26, dmm, chan):
+def step3(k26, dmm, chan, point=None):
     print('\n******** STEP 3 (current <= 1A) . Verify connections:')
     print('*** DMM_LO -> L')
     print('*** DMM_HI -> H')
     input("-------- press Enter when ready ---------")
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm.config_i()
-    for calstep in k2602_points.icalsteps:
-        print(f'I cal step: {calstep}')
-        k26.write(f'smu{chan}.source.rangei = {calstep.range}')
-        k26.write(f'smu{chan}.sense = {calstep.sensemode}')
+    points = k2602_points.icalsteps
+    if point in range(0, len(points)):
+        points = [points[point]]
+    for calpoint in points:
+        print(f'I cal point: {calpoint}')
+        k26.write(f'smu{chan}.source.rangei = {calpoint.range}')
+        k26.write(f'smu{chan}.sense = {calpoint.sensemode}')
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_POSITIVE')
-        step3_do_one(k26, dmm, chan, calstep, 1)
+        step3_do_one(k26, dmm, chan, calpoint, 1)
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_NEGATIVE')
-        step3_do_one(k26, dmm, chan, calstep, -1)
+        step3_do_one(k26, dmm, chan, calpoint, -1)
     print('***** step 3 (low current ranges) done ****')
     k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_AUTO')
+    return
 
 # almost identical to step3. SMU pulse mode could be difficult to use while
 # synchronizing to external DMM...
@@ -275,7 +284,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     k26_get_errors(k26)
     return
 
-def step4(k26, dmm, chan):
+def step4(k26, dmm, chan, point=None):
     print('\n******** STEP 3B (current > 1A) . Verify connections (fig 16-3):')
     print('*** DMM_LO -> 0R5 sense_L')
     print('*** DMM_HI -> 0R5 sense_H')
@@ -283,18 +292,21 @@ def step4(k26, dmm, chan):
     print('*** SMU_H -> 0R5 H')
     input("-------- press Enter when ready ---------")
     dmm.config_v()
-    for calstep in k2602_points.icalsteps_hi:
-        print(f'I cal step: {calstep}')
-        k26.write(f'smu{chan}.source.rangei = {calstep.range}')
-        k26.write(f'smu{chan}.sense = {calstep.sensemode}')
+    points = k2602_points.icalsteps_hi
+    if point in range(0, len(points)):
+        points = [points[point]]
+    for calpoint in points:
+        print(f'I cal point: {calpoint}')
+        k26.write(f'smu{chan}.source.rangei = {calpoint.range}')
+        k26.write(f'smu{chan}.sense = {calpoint.sensemode}')
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_POSITIVE')
-        step4_do_one(k26, dmm, chan, calstep, 1)
+        step4_do_one(k26, dmm, chan, calpoint, 1)
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_NEGATIVE')
-        step4_do_one(k26, dmm, chan, calstep, -1)
+        step4_do_one(k26, dmm, chan, calpoint, -1)
     print('***** step 3 (hi current ranges) done ****')
     k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_AUTO')
 
-def step5(k26, dmm, chan):
+def step5(k26, dmm, chan, point=None):
     print('\n******** STEP 4 (contact 0) . Verify connections (fig 16-4):')
     print('*** no DMM; short L -> SL, and H -> SH')
     input("-------- press Enter when ready ---------")
@@ -308,21 +320,22 @@ def step5(k26, dmm, chan):
     k26.write(f'smu{chan}.contact.calibratelo(r0_lo, {cfg.cal.r0_actual}, r50_lo, {cfg.cal.r50_l})')
     k26.write(f'smu{chan}.contact.calibratehi(r0_hi, {cfg.cal.r0_actual}, r50_hi, {cfg.cal.r50_h})')
 
-def step6(k26, chan):
+def step6(k26, dmm, chan, point=None):
     today = dt.date.today()
     k26.write(f'smu{chan}.cal.date = os.time(year={today.year}, month={today.month}, day={today.day})')
     k26.write(f'smu{chan}.cal.due = os.time(year={today.year+1}, month={today.month}, day={today.day})')
     k26.write(f'smu{chan}.cal.save()')
     k26.write(f'smu{chan}.cal.lock()')
 
-# gather calsteps together
+# gather calsteps together, except step6 that is meaningless on its own
 calsteps = [None, None, step2, step3, step4, step5]
 
 def main():
     parser = argparse.ArgumentParser(description="K 2600 calibration script")
     parser.add_argument('-c', '--cfg', type=argparse.FileType('r'), required=True, help='config file')
-    parser.add_argument('-s', '--chan', required=True, help='select channel [a|b]')
-    parser.add_argument('-p', '--step', type=int, help='run only step # [2..5]')
+    parser.add_argument('-x', '--chan', required=True, help='select channel [a|b]')
+    parser.add_argument('-s', '--step', type=int, help='run only step # [2..5]')
+    parser.add_argument('-p', '--point', type=int, help='run only one cal point (use with -s)')
     parser.add_argument('-n', action='store_true', help='dry run, will not save cal')
     parser.add_argument('-t', action='store_true', help='test mode (dev)')
     parser.add_argument('-l', '--log', default='cal_tmp.log', help='output log file')
@@ -334,10 +347,15 @@ def main():
     global cfg
     cfg = DynamicConfigIni(parser)
 
-    if (args.chan != 'a') and (args.chan != 'b'):
+    chan = args.chan
+    if (chan != 'a') and (chan != 'b'):
         print("bad channel, must be a or b")
         exit()
-    chan = args.chan
+
+    point = args.point
+    if (point and not args.step):
+        print('cannot specify single point without step !')
+        exit()
 
     ## setup logging, test/debug options
     global logf
@@ -386,7 +404,7 @@ def main():
         steps = range(2,6)
 
     for s in steps:
-        calsteps[s](k26, dmm, chan)
+        calsteps[s](k26, dmm, chan, point)
         k26_get_errors(k26)
 
     if not dryrun:

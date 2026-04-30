@@ -169,7 +169,7 @@ def step2_do_one(k26, dmm, chan, pvstep, sign):
     return
 
 #step2 : output volt accu test; p. 15-6
-def step2(k26, dmm, chan):
+def step2(k26, dmm, chan, point=None):
     print('\n******** STEP 2 (output voltage) . Verify connections:')
     print('*** DMM_LO -> SL, and DMM_LO -> L')
     print('*** DMM_HI -> SH, and DMM_HI -> H')
@@ -179,7 +179,10 @@ def step2(k26, dmm, chan):
     k26.write(f'smu{chan}.sense = smu{chan}.SENSE_REMOTE')
     dmm.config_v()
     print_result_header()
-    for pvstep in k2602_limits.vsource_points:
+    points = k2602_limits.vsource_points
+    if point in range(0, len(points)):
+        points = [points[point]]
+    for pvstep in points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
         step2_do_one(k26, dmm, chan, pvstep, 1)
         step2_do_one(k26, dmm, chan, pvstep, -1)
@@ -217,7 +220,7 @@ def step3_do_one(k26, dmm, chan, pvstep, sign):
     return
 
 #step3 : volt meas accu test; p. 15-8
-def step3(k26, dmm, chan):
+def step3(k26, dmm, chan, point=None):
     print('\n******** STEP 3 (voltage meas. accu) . Verify connections:')
     print('*** DMM_LO -> SL, and DMM_LO -> L')
     print('*** DMM_HI -> SH, and DMM_HI -> H')
@@ -227,7 +230,10 @@ def step3(k26, dmm, chan):
     k26.write(f'smu{chan}.sense = smu{chan}.SENSE_REMOTE')
     dmm.config_v()
     print_result_header()
-    for pvstep in k2602_limits.vmeas_points:
+    points = k2602_limits.vmeas_points
+    if point in range(0, len(points)):
+        points = [points[point]]
+    for pvstep in points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
         step3_do_one(k26, dmm, chan, pvstep, 1)
         step3_do_one(k26, dmm, chan, pvstep, -1)
@@ -258,7 +264,7 @@ def step4_do_one(k26, dmm, chan, pvstep, sign):
     return
 
 #step4: low I source test; p. 15-9
-def step4(k26, dmm, chan):
+def step4(k26, dmm, chan, point=None):
     print('\n******** STEP 4 (I source <= 1A). Verify connections:')
     print('*** DMM_LO -> L')
     print('*** DMM_HI -> H')
@@ -267,7 +273,10 @@ def step4(k26, dmm, chan):
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm.config_i()
     print_result_header()
-    for pvstep in k2602_limits.isource_points:
+    points = k2602_limits.isource_points
+    if point in range(0, len(points)):
+        points = [points[point]]
+    for pvstep in points:
         k26.write(f'smu{chan}.source.rangei = {pvstep.range}')
         step4_do_one(k26, dmm, chan, pvstep, 1)
         step4_do_one(k26, dmm, chan, pvstep, -1)
@@ -312,7 +321,7 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
     return
 
 #step5 : low I meas accu test; p. 15-14
-def step5(k26, dmm, chan):
+def step5(k26, dmm, chan, point=None):
     print('\n******** STEP 5 (I meas <= 1A) . Verify connections:')
     print('*** DMM_LO -> SL, and DMM_LO -> L')
     print('*** DMM_HI -> SH, and DMM_HI -> H')
@@ -321,7 +330,10 @@ def step5(k26, dmm, chan):
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm.config_i()
     print_result_header()
-    for pvstep in k2602_limits.imeas_points:
+    points = k2602_limits.imeas_points
+    if point in range(0, len(points)):
+        points = [points[point]]
+    for pvstep in points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
         step5_do_one(k26, dmm, chan, pvstep, 1)
         step5_do_one(k26, dmm, chan, pvstep, -1)
@@ -351,7 +363,7 @@ def step6_do_one(k26, dmm, chan, pvstep, sign):
     return
 
 #step6: high I source test; p. 15-9
-def step6(k26, dmm, chan):
+def step6(k26, dmm, chan, point=None):
     print('\n******** STEP 6 (I source > 1A). Verify connections:')
     print('*** DMM_LO -> 0R5 sense_L')
     print('*** DMM_HI -> 0R5 sense_H')
@@ -362,7 +374,10 @@ def step6(k26, dmm, chan):
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm.config_v()
     print_result_header()
-    for pvstep in k2602_limits.isource_hi_points:
+    points = k2602_limits.isource_hi_points
+    if point in range(0, len(points)):
+        points = [points[point]]
+    for pvstep in points:
         k26.write(f'smu{chan}.source.rangei = {pvstep.range}')
         step6_do_one(k26, dmm, chan, pvstep, 1)
         step6_do_one(k26, dmm, chan, pvstep, -1)
@@ -407,7 +422,7 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     return
 
 #step7 : high I meas accu test; p. 15-14
-def step7(k26, dmm, chan):
+def step7(k26, dmm, chan, point=None):
     print('\n******** STEP 7 (I meas > 1A) . Verify connections (fig 15-3):')
     print('*** DMM_LO -> 0R5 sense_L')
     print('*** DMM_HI -> 0R5 sense_H')
@@ -418,7 +433,10 @@ def step7(k26, dmm, chan):
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm.config_v()
     print_result_header()
-    for pvstep in k2602_limits.imeas_hi_points:
+    points = k2602_limits.imeas_hi_points
+    if point in range(0, len(points)):
+        points = [points[point]]
+    for pvstep in points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
         step7_do_one(k26, dmm, chan, pvstep, 1)
         step7_do_one(k26, dmm, chan, pvstep, -1)
@@ -430,8 +448,9 @@ calsteps = [None, None, step2, step3, step4, step5, step6, step7]
 def main():
     parser = argparse.ArgumentParser(description="K 2600 performance verif")
     parser.add_argument('-c', '--cfg', type=argparse.FileType('r'), required=True, help='config file')
-    parser.add_argument('-s', '--chan', required=True, help='select channel [a|b]')
-    parser.add_argument('-p', '--step', type=int, help='run only step # [2..7]')
+    parser.add_argument('-x', '--chan', required=True, help='select channel [a|b]')
+    parser.add_argument('-s', '--step', type=int, help='run only step # [2..7]')
+    parser.add_argument('-p', '--point', type=int, help='run only one cal point (use with -s)')
     parser.add_argument('-t', action='store_true', help='test mode (dev)')
     parser.add_argument('-l', '--log', default='pv_tmp.log', help='output log file')
     args = parser.parse_args(sys.argv[1:])
@@ -444,6 +463,11 @@ def main():
 
     if (args.chan != 'a') and (args.chan != 'b'):
         print("bad channel, must be a or b")
+        exit()
+
+    point = args.point
+    if (point and not args.step):
+        print('cannot specify single point without step !')
         exit()
 
     ## setup logging, test/debug options
@@ -492,7 +516,7 @@ def main():
         steps = range(2,8)
 
     for s in steps:
-        calsteps[s](k26, dmm, args.chan)
+        calsteps[s](k26, dmm, args.chan, point)
 
     logf.info(f'\n*********** DONE *********')
     k26.write('abort') #return to local
