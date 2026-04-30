@@ -68,26 +68,6 @@ def log_configtree(logger, parser: configparser):
             rawval = parser[sec][key]
             logger.info(f'\t{sec}.{key}={rawval}')
 
-## dummy pyvisa resources for offline debugging
-class pyvisa_dummy():
-    def __init__(self, name):
-        self.name = name
-        self.val = 0    # dummy val for readings etc; increment on every query
-    def write(self, ws):
-        logf.debug(f"{self.name}.write('{ws}')")
-    def query(self, qs):
-        logf.debug(f"{self.name}.query('{qs}') => {self.val}")
-        self.val = self.val + 1
-        return f'{self.val}'
-    def read_ascii_values(self):
-        logf.debug(f"{self.name}.read_ascii_values() => {self.val}")
-        self.val = self.val + 1
-        return [self.val]
-    def query_ascii_values(self, qs):
-        logf.debug(f"{self.name}.query_ascii_values('{qs}') => {self.val}")
-        self.val = self.val + 1
-        return [self.val]
-
 def open_k26(resman):
     k26_res = resman.open_resource(cfg.dut.res)
     k26_res.baud_rate = cfg.dut.baud
