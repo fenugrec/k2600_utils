@@ -25,6 +25,7 @@ import logging
 import sys
 from time import sleep
 from dmm import *
+from k26_common import *
 
 #func to format each measurement result
 def print_result_header():
@@ -162,6 +163,7 @@ def step2_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
     print_result(vrange, target, dmm_rdg, delta, pvstep.tol)
+    k26_get_errors(k26)
     return
 
 #step2 : output volt accu test; p. 15-6
@@ -205,6 +207,7 @@ def step3_do_one(k26, dmm, chan, pvstep, sign):
     delta = dmm_rdg - smu_rdg
     logf.info(f'V meas final: range={vrange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
     print_result(vrange, target, dmm_rdg, delta, pvstep.tol)
+    k26_get_errors(k26)
     return
 
 #step3 : volt meas accu test; p. 15-8
@@ -243,6 +246,7 @@ def step4_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
     print_result(irange, target, dmm_rdg, delta, pvstep.tol)
+    k26_get_errors(k26)
     return
 
 #step4: low I source test; p. 15-9
@@ -293,6 +297,7 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
     delta = dmm_rdg - smu_rdg
     logf.info(f'I meas final: range={irange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
     print_result(irange, target, dmm_rdg, delta, pvstep.tol)
+    k26_get_errors(k26)
     return
 
 #step5 : low I meas accu test; p. 15-14
@@ -329,6 +334,7 @@ def step6_do_one(k26, dmm, chan, pvstep, sign):
     dmm_rdg = dmm_raw / cfg.pv.r5_actual
     delta = dmm_rdg - target
     print_result(irange, target, dmm_rdg, delta, pvstep.tol)
+    k26_get_errors(k26)
     return
 
 #step6: high I source test; p. 15-9
@@ -381,6 +387,7 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     delta = dmm_rdg - smu_rdg
     logf.info(f'I meas final: range={irange} vsense={dmm_raw} i_calc={dmm_rdg} smu={smu_rdg} delta={delta}')
     print_result(irange, target, dmm_rdg, delta, pvstep.tol)
+    k26_get_errors(k26)
     return
 
 #step7 : high I meas accu test; p. 15-14

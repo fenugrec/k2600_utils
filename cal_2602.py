@@ -17,7 +17,6 @@
 
 # TODO :
 # -tweak logger to output to file as well as print
-# -check errors with *STB?
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
 # -separate dwell times for 100mA + 1A too
 
@@ -31,6 +30,7 @@ import logging
 import sys
 from time import sleep
 from dmm import *
+from k26_common import *
 
 # some config class magic, https://alexandra-zaharia.github.io/posts/python-configuration-and-dataclasses/
 # modified to use ast.literal_eval() to ~safely convert strings to numeric types when applicable
@@ -156,6 +156,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     logf.info(f'V cal step : range={vrange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
     if not calstep.sourceonly:
         k26.write(f'smu{chan}.measure.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
+    k26_get_errors(k26)
     return
 
 def step2(k26, dmm, chan):
@@ -208,6 +209,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     logf.info(f'I cal step : range={irange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
     if not calstep.sourceonly:
         k26.write(f'smu{chan}.measure.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
+    k26_get_errors(k26)
     return
 
 def step3(k26, dmm, chan):
@@ -258,6 +260,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     logf.info(f'I cal step (dmm raw zero={dmm_z_raw}, fs={dmm_fs_raw}): ' + calcmd)
     k26.write(calcmd)
+    k26_get_errors(k26)
     return
 
 def step4(k26, dmm, chan):
@@ -367,6 +370,7 @@ def main():
 
     for s in steps:
         calsteps[s](k26, dmm, args.chan)
+        k26_get_errors(k26)
 
     if not dryrun:
         print('\n******** STEP 6')
