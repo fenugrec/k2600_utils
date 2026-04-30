@@ -158,7 +158,7 @@ def step2_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.levelv = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.step_dwell)
-    dmm_rdg = dmm_read_v(dmm)
+    dmm_rdg = dmm.read_v()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
     print_result(vrange, target, dmm_rdg, delta, pvstep.tol)
@@ -173,7 +173,7 @@ def step2(k26, dmm, chan):
     logf.info('\n STEP 2')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
     k26.write(f'smu{chan}.sense = smu{chan}.SENSE_REMOTE')
-    dmm_config_v(dmm)
+    dmm.config_v()
     print_result_header()
     for pvstep in k2602_limits.vsource_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
@@ -193,14 +193,14 @@ def step3_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.levelv = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.step_dwell)
-    dmm_rdg = dmm_read_v(dmm)
+    dmm_rdg = dmm.read_v()
     delta = dmm_rdg - target
     logf.info(f'V meas initial: range={vrange} tgt={target} rdg={dmm_rdg} delta={delta}')
     # adjust SMU once, should be 'close enough'
     k26.write(f'smu{chan}.source.levelv = {target - delta}')
     sleep(cfg.pv.step_dwell)
     smu_rdg = k26.query_ascii_values(f'print(smu{chan}.measure.v())')[0]
-    dmm_rdg = dmm_read_v(dmm)
+    dmm_rdg = dmm.read_v()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - smu_rdg
     logf.info(f'V meas final: range={vrange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
@@ -216,7 +216,7 @@ def step3(k26, dmm, chan):
     logf.info('\n STEP 3')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
     k26.write(f'smu{chan}.sense = smu{chan}.SENSE_REMOTE')
-    dmm_config_v(dmm)
+    dmm.config_v()
     print_result_header()
     for pvstep in k2602_limits.vmeas_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
@@ -239,7 +239,7 @@ def step4_do_one(k26, dmm, chan, pvstep, sign):
         dwell = cfg.pv.step_dwell
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(dwell)
-    dmm_rdg = dmm_read_i(dmm)
+    dmm_rdg = dmm.read_i()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
     print_result(irange, target, dmm_rdg, delta, pvstep.tol)
@@ -253,7 +253,7 @@ def step4(k26, dmm, chan):
     input("-------- press Enter when ready ---------")
     logf.info('\n STEP 4')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
-    dmm_config_i(dmm)
+    dmm.config_i()
     print_result_header()
     for pvstep in k2602_limits.isource_points:
         k26.write(f'smu{chan}.source.rangei = {pvstep.range}')
@@ -278,7 +278,7 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     # use configurable dwell only first time ?
     sleep(dwell)
-    dmm_rdg = dmm_read_i(dmm)
+    dmm_rdg = dmm.read_i()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
     logf.info(f'I meas initial: range={irange} tgt={target} rdg={dmm_rdg} delta={delta}')
@@ -288,7 +288,7 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.step_dwell)
     smu_rdg = k26.query_ascii_values(f'print(smu{chan}.measure.i())')[0]
-    dmm_rdg = dmm_read_i(dmm)
+    dmm_rdg = dmm.read_i()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - smu_rdg
     logf.info(f'I meas final: range={irange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
@@ -303,7 +303,7 @@ def step5(k26, dmm, chan):
     input("-------- press Enter when ready ---------")
     logf.info('\n STEP 5')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
-    dmm_config_i(dmm)
+    dmm.config_i()
     print_result_header()
     for pvstep in k2602_limits.imeas_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
@@ -322,7 +322,7 @@ def step6_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.leveli = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
-    dmm_raw = dmm_read_v(dmm)
+    dmm_raw = dmm.read_v()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
@@ -341,7 +341,7 @@ def step6(k26, dmm, chan):
     input("-------- press Enter when ready ---------")
     logf.info('\n STEP 6')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
-    dmm_config_v(dmm)
+    dmm.config_v()
     print_result_header()
     for pvstep in k2602_limits.isource_hi_points:
         k26.write(f'smu{chan}.source.rangei = {pvstep.range}')
@@ -361,7 +361,7 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.leveli = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
-    dmm_raw = dmm_read_v(dmm)
+    dmm_raw = dmm.read_v()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
@@ -372,7 +372,7 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.leveli = {target - delta}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
-    dmm_raw = dmm_read_v(dmm)
+    dmm_raw = dmm.read_v()
     smu_rdg = k26.query_ascii_values(f'print(smu{chan}.measure.i())')[0]
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
@@ -393,7 +393,7 @@ def step7(k26, dmm, chan):
     input("-------- press Enter when ready ---------")
     logf.info('\n STEP 7')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
-    dmm_config_v(dmm)
+    dmm.config_v()
     print_result_header()
     for pvstep in k2602_limits.imeas_hi_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
@@ -430,14 +430,17 @@ def main():
     global testmode
     testmode = args.t
 
+    # a bit confusing where 'dmm' is a class with stuff like dmm.read_v(), 
+    # but k26 is a pyvisa resource that has .write(), .read_ascii_values() etc
     if testmode:
-        dmm = pyvisa_dummy('dmm_dummy')
+        dmm = dmm_3478(pyvisa_dummy('dmm_dummy'))
         k26 = pyvisa_dummy('k26_dummy')
         logf.setLevel(logging.DEBUG)
     else:
         rm = pyvisa.ResourceManager()
+        dmm_res = rm.open_resource(cfg.dmm.res)
         k26 = open_k26(rm)
-        dmm = dmm_open(rm, cfg.dmm.res)
+        dmm = dmm_3478(dmm_res)
         logf.setLevel(logging.INFO)
 
     ## start cal process

@@ -142,13 +142,13 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     sleep(cfg.cal.step_dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
     k26.write(f'z_rdg = smu{chan}.measure.v()')
-    dmm_z = dmm_read_v(dmm)
+    dmm_z = dmm.read_v()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.levelv = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.step_dwell)
     k26.write(f'fs_rdg = smu{chan}.measure.v()')
-    dmm_fs = dmm_read_v(dmm)
+    dmm_fs = dmm.read_v()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     smu_z = k26.query_ascii_values(f'print(z_rdg)')[0]
     smu_fs = k26.query_ascii_values(f'print(fs_rdg)')[0]
@@ -167,7 +167,7 @@ def step2(k26, dmm, chan):
     f'smu{chan}.cal.unlock("KI0026XX")'
     f'smu{chan}.reset()'
     f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS'
-    dmm_config_v(dmm)
+    dmm.config_v()
     for calstep in vcalsteps:
         print(f'V cal step: {calstep}')
         k26.write(f'smu{chan}.source.rangev = {calstep.range}')
@@ -194,13 +194,13 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     sleep(cfg.cal.step_dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
     k26.write(f'z_rdg = smu{chan}.measure.i()')
-    dmm_z = dmm_read_i(dmm)
+    dmm_z = dmm.read_i()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.leveli = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.step_dwell)
     k26.write(f'fs_rdg = smu{chan}.measure.i()')
-    dmm_fs = dmm_read_i(dmm)
+    dmm_fs = dmm.read_i()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     smu_z = k26.query_ascii_values(f'print(z_rdg)')[0]
     smu_fs = k26.query_ascii_values(f'print(fs_rdg)')[0]
@@ -217,7 +217,7 @@ def step3(k26, dmm, chan):
     print('*** DMM_HI -> H')
     input("-------- press Enter when ready ---------")
     f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS'
-    dmm_config_i(dmm)
+    dmm.config_i()
     for calstep in icalsteps:
         print(f'I cal step: {calstep}')
         k26.write(f'smu{chan}.source.rangei = {calstep.range}')
@@ -244,13 +244,13 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
     k26.write(f'z_rdg = smu{chan}.measure.i()')
-    dmm_z_raw = dmm_read_v(dmm) 
+    dmm_z_raw = dmm.read_v() 
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.leveli = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
     k26.write(f'fs_rdg = smu{chan}.measure.i()')
-    dmm_fs_raw = dmm_read_v(dmm)
+    dmm_fs_raw = dmm.read_v()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
     sleep(cfg.cal.ipulse_toff)
@@ -268,7 +268,7 @@ def step4(k26, dmm, chan):
     print('*** SMU_L -> 0R5 L')
     print('*** SMU_H -> 0R5 H')
     input("-------- press Enter when ready ---------")
-    dmm_config_v(dmm)
+    dmm.config_v()
     for calstep in icalsteps_hi:
         print(f'I cal step: {calstep}')
         k26.write(f'smu{chan}.source.rangei = {calstep.range}')
@@ -333,13 +333,14 @@ def main():
     dryrun = args.n
 
     if testmode:
-        dmm = pyvisa_dummy('dmm_dummy')
+        dmm = dmm_3478(pyvisa_dummy('dmm_dummy'))
         k26 = pyvisa_dummy('k26_dummy')
         logf.setLevel(logging.DEBUG)
     else:
         rm = pyvisa.ResourceManager()
         k26 = open_k26(rm)
-        dmm = dmm_open(rm, cfg.dmm.res)
+        dmm_res = rm.open_resource(cfg.dmm.res)
+        dmm = dmm_3478(dmm_res)
 
     ## start cal process
     logf.info(f'start cal on {dt.datetime.now().isoformat()}, SMU chan {args.chan}')
