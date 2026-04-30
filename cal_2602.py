@@ -16,7 +16,6 @@
 # - general config is held in external cal.conf to ideally avoid having to edit this script at all
 
 # TODO :
-# -implement read_multi with stats for SMU readings too?
 # -tweak logger to output to file as well as print
 # -case-sensitive configparser instead of force-lowercase
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
@@ -146,22 +145,21 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.step_dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
-    k26.write(f'z_rdg = smu{chan}.measure.v()')
+    k26r = lambda: k26_read_v(k26)
+    smu_z = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'smu').median
     dmm_z = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.levelv = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.step_dwell)
-    k26.write(f'fs_rdg = smu{chan}.measure.v()')
+    k26r = lambda: k26_read_v(k26)
+    smu_fs = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'smu').median
     dmm_fs = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
-    smu_z = k26.query_ascii_values(f'print(z_rdg)')[0]
-    smu_fs = k26.query_ascii_values(f'print(fs_rdg)')[0]
-    calcmd = f'smu{chan}.source.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
-    k26.write(calcmd)
     logf.info(f'V cal step : range={vrange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
+    k26.write(f'smu{chan}.source.calibratev({vrange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
     if not calstep.sourceonly:
-        k26.write(f'smu{chan}.measure.calibratev({vrange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
+        k26.write(f'smu{chan}.measure.calibratev({vrange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
     k26_get_errors(k26)
     return
 
@@ -204,23 +202,22 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
-    k26.write(f'z_rdg = smu{chan}.measure.i()')
+    k26r = lambda: k26_read_i(k26)
+    smu_z = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'smu').median
     dmm_z = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.leveli = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
 # use default dwell here since we presumably settled everything already?
     sleep(cfg.cal.step_dwell)
-    k26.write(f'fs_rdg = smu{chan}.measure.i()')
+    k26r = lambda: k26_read_i(k26)
+    smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'smu').median
     dmm_fs = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
-    smu_z = k26.query_ascii_values(f'print(z_rdg)')[0]
-    smu_fs = k26.query_ascii_values(f'print(fs_rdg)')[0]
-    calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
-    k26.write(calcmd)
     logf.info(f'I cal step : range={irange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
+    k26.write(f'smu{chan}.source.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
     if not calstep.sourceonly:
-        k26.write(f'smu{chan}.measure.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
+        k26.write(f'smu{chan}.measure.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
     k26_get_errors(k26)
     return
 
@@ -258,23 +255,24 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.leveli = {zval}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
-    k26.write(f'z_rdg = smu{chan}.measure.i()')
+    k26r = lambda: k26_read_i(k26)
+    smu_z = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'smu').median
     dmm_z_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.leveli = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
-    k26.write(f'fs_rdg = smu{chan}.measure.i()')
+    k26r = lambda: k26_read_i(k26)
+    smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'smu').median
     dmm_fs_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
     sleep(cfg.cal.ipulse_toff)
     dmm_z = dmm_z_raw / cfg.cal.r5_actual
     dmm_fs = dmm_fs_raw / cfg.cal.r5_actual
-    calcmd = f'smu{chan}.source.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})'
     logf.info(f'I cal step (dmm raw zero={dmm_z_raw}, fs={dmm_fs_raw}): ' + calcmd)
-    k26.write(calcmd)
-    k26.write(f'smu{chan}.measure.calibratei({irange}, z_rdg, {dmm_z}, fs_rdg, {dmm_fs})')
+    k26.write(f'smu{chan}.source.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
+    k26.write(f'smu{chan}.measure.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
     k26_get_errors(k26)
     return
 

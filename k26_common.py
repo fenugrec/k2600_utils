@@ -25,6 +25,13 @@ def k26_get_errors(res):
         print(f'**** errors still present !')
         quit()
 
+#shorthand
+def k26_read_v(pyvisa_res, chan):
+    return pyvisa_res.query_ascii_values(f'print(smu{chan}.measure.v())')[0]
+
+def k26_read_i(pyvisa_res, chan):
+    return pyvisa_res.query_ascii_values(f'print(smu{chan}.measure.i())')[0]
+
 # given an arbitrary func that returns one val, take readings and compute stats
 class read_multi():
     def __init__(self, readfunc, discard, keep, logfunc, prefix=''):
