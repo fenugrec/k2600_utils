@@ -26,6 +26,19 @@ import sys
 from time import sleep
 from dmm import *
 
+#func to format each measurement result
+def print_result_header():
+    print('\nrange   \ttarget   \treading   \tdelta   \ttol   \tpass')
+
+def print_result(range, tgt, rdg, delta, tol):
+    delta_ppm = (delta / tgt) * 1e6
+    if abs(delta) > tol:
+        result = '* FAIL *'
+    else:
+        result = 'OK'
+    print(f'{range:8g}\t{tgt:10.7g}\t{rdg:10.7g}\t'
+        + f'{delta:10.7g} ({delta_ppm:.4g} ppm)\t{tol:10.7g}\t{result}')
+
 # some config class magic, https://alexandra-zaharia.github.io/posts/python-configuration-and-dataclasses/
 # modified to use ast.literal_eval() to ~safely convert strings to numeric types when applicable
 # idea is to digest a ini-style .conf file into a class whose members can be used like 'cfg.dut.baud'
@@ -147,10 +160,7 @@ def step2_do_one(k26, dmm, chan, pvstep, sign):
     dmm_rdg = dmm_read_v(dmm)
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
-    report=f'output V step: range={vrange} tgt={target} rdg={dmm_rdg} delta={delta} tol={pvstep.tol}'
-    if abs(delta) > pvstep.tol:
-        report = report + '\t*** OUT OF SPEC ***'
-    print(report)
+    print_result(vrange, target, dmm_rdg, delta, pvstep.tol)
     return
 
 #step2 : output volt accu test; p. 15-6
@@ -163,6 +173,7 @@ def step2(k26, dmm, chan):
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
     k26.write(f'smu{chan}.sense = smu{chan}.SENSE_REMOTE')
     dmm_config_v(dmm)
+    print_result_header()
     for pvstep in k2602_limits.vsource_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
         step2_do_one(k26, dmm, chan, pvstep, 1)
@@ -192,10 +203,7 @@ def step3_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - smu_rdg
     logf.info(f'V meas final: range={vrange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
-    report=f'V meas step: range={vrange} tgt={target} rdg={dmm_rdg} delta={delta} tol={pvstep.tol}'
-    if abs(delta) > pvstep.tol:
-        report = report + '\t*** OUT OF SPEC ***'
-    print(report)
+    print_result(vrange, target, dmm_rdg, delta, pvstep.tol)
     return
 
 #step3 : volt meas accu test; p. 15-8
@@ -208,6 +216,7 @@ def step3(k26, dmm, chan):
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
     k26.write(f'smu{chan}.sense = smu{chan}.SENSE_REMOTE')
     dmm_config_v(dmm)
+    print_result_header()
     for pvstep in k2602_limits.vmeas_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
         step3_do_one(k26, dmm, chan, pvstep, 1)
@@ -228,10 +237,7 @@ def step4_do_one(k26, dmm, chan, pvstep, sign):
     dmm_rdg = dmm_read_i(dmm)
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
-    report=f'I source step: range={irange} tgt={target} rdg={dmm_rdg} delta={delta} tol={pvstep.tol}'
-    if abs(delta) > pvstep.tol:
-        report = report + '\t*** OUT OF SPEC ***'
-    print(report)
+    print_result(irange, target, dmm_rdg, delta, pvstep.tol)
     return
 
 #step4: low I source test; p. 15-9
@@ -243,6 +249,7 @@ def step4(k26, dmm, chan):
     logf.info('\n STEP 4')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm_config_i(dmm)
+    print_result_header()
     for pvstep in k2602_limits.isource_points:
         k26.write(f'smu{chan}.source.rangei = {pvstep.range}')
         step4_do_one(k26, dmm, chan, pvstep, 1)
@@ -273,10 +280,7 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - smu_rdg
     logf.info(f'I meas final: range={irange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
-    report=f'I meas step: range={irange} tgt={target} rdg={dmm_rdg} delta={delta} tol={pvstep.tol}'
-    if abs(delta) > pvstep.tol:
-        report = report + '\t*** OUT OF SPEC ***'
-    print(report)
+    print_result(irange, target, dmm_rdg, delta, pvstep.tol)
     return
 
 #step5 : low I meas accu test; p. 15-14
@@ -288,6 +292,7 @@ def step5(k26, dmm, chan):
     logf.info('\n STEP 5')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm_config_v(dmm)
+    print_result_header()
     for pvstep in k2602_limits.imeas_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
         step5_do_one(k26, dmm, chan, pvstep, 1)
@@ -311,10 +316,7 @@ def step6_do_one(k26, dmm, chan, pvstep, sign):
     sleep(cfg.pv.ipulse_toff)
     dmm_rdg = dmm_raw / cfg.pv.r5_actual
     delta = dmm_rdg - target
-    report=f'I source step: range={irange} tgt={target} rdg={dmm_rdg} delta={delta} tol={pvstep.tol}'
-    if abs(delta) > pvstep.tol:
-        report = report + '\t*** OUT OF SPEC ***'
-    print(report)
+    print_result(irange, target, dmm_rdg, delta, pvstep.tol)
     return
 
 #step6: high I source test; p. 15-9
@@ -328,6 +330,7 @@ def step6(k26, dmm, chan):
     logf.info('\n STEP 6')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm_config_v(dmm)
+    print_result_header()
     for pvstep in k2602_limits.isource_hi_points:
         k26.write(f'smu{chan}.source.rangei = {pvstep.range}')
         step6_do_one(k26, dmm, chan, pvstep, 1)
@@ -365,10 +368,7 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     dmm_rdg = dmm_raw / cfg.pv.r5_actual
     delta = dmm_rdg - smu_rdg
     logf.info(f'I meas final: range={irange} vsense={dmm_raw} i_calc={dmm_rdg} smu={smu_rdg} delta={delta}')
-    report=f'I meas step: range={irange} tgt={target} rdg={dmm_rdg} delta={delta} tol={pvstep.tol}'
-    if abs(delta) > pvstep.tol:
-        report = report + '\t*** OUT OF SPEC ***'
-    print(report)
+    print_result(irange, target, dmm_rdg, delta, pvstep.tol)
     return
 
 #step7 : high I meas accu test; p. 15-14
@@ -382,6 +382,7 @@ def step7(k26, dmm, chan):
     logf.info('\n STEP 7')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm_config_v(dmm)
+    print_result_header()
     for pvstep in k2602_limits.imeas_hi_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
         step7_do_one(k26, dmm, chan, pvstep, 1)
