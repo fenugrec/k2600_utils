@@ -29,7 +29,7 @@ from k26_common import *
 
 #func to format each measurement result
 def print_result_header():
-    print('\nrange   \ttarget   \treading   \tdelta   \ttol   \tpass')
+    print(f'\n{'range':10}\t{'target':10}\t{'reading':10}\t{'delta':20}\t{'tol':10}\t{'pass':10}')
 
 def print_result(range, tgt, rdg, delta, tol):
     delta_ppm = (delta / tgt) * 1e6
