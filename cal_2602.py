@@ -81,7 +81,7 @@ class pyvisa_dummy():
 def open_k26(resman):
     k26_res = resman.open_resource(cfg.dut.res)
     k26_res.baud_rate = cfg.dut.baud
-    k26_res.flow_control = cfg.dut.flow
+    k26_res.flow_control = pyvisa.constants.ControlFlow[cfg.dut.flow]
     idstring = k26_res.query('*idn?')
     if not idstring.contains('2602'):
         print("ID query mismatch")
