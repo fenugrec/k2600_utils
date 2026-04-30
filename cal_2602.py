@@ -9,8 +9,9 @@
 # - dry-run to go through entire cal without saving to eeprom
 
 # **** code structure
-# - cal steps described in ref manual section 16, are implemented in functions 'step2' to 'step4';
-# - part of step 3 (current ranges) is split to a step3b func since it requires different wiring and code
+# - cal steps described in ref manual section 16, are implemented in functions 'step2' to 'step7';
+# - part of step 3 (current ranges) is split since it requires different wiring and code,
+#   and the numbering of steps no longer matches the refman.
 # - main() near the end initializes stuff and includes step1
 # - general config is held in external cal.conf to ideally avoid having to edit this script at all
 
@@ -230,7 +231,7 @@ def step3(k26, dmm, chan):
 
 # almost identical to step3. SMU pulse mode could be difficult to use while
 # synchronizing to external DMM...
-def step3b_do_one(k26, dmm, chan, calstep, sign):
+def step4_do_one(k26, dmm, chan, calstep, sign):
     if sign > 0:
         irange = calstep.range
         zval = calstep.zval
@@ -260,7 +261,7 @@ def step3b_do_one(k26, dmm, chan, calstep, sign):
     k26.write(calcmd)
     return
 
-def step3b(k26, dmm, chan):
+def step4(k26, dmm, chan):
     print('\n******** STEP 3B (current > 1A) . Verify connections (fig 16-3):')
     print('*** DMM_LO -> 0R5 sense_L')
     print('*** DMM_HI -> 0R5 sense_H')
@@ -273,13 +274,13 @@ def step3b(k26, dmm, chan):
         k26.write(f'smu{chan}.source.rangei = {calstep.range}')
         k26.write(f'smu{chan}.sense = {calstep.sensemode}')
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_POSITIVE')
-        step3b_do_one(k26, dmm, chan, calstep, 1)
+        step4_do_one(k26, dmm, chan, calstep, 1)
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_NEGATIVE')
-        step3b_do_one(k26, dmm, chan, calstep, -1)
+        step4_do_one(k26, dmm, chan, calstep, -1)
     print('***** step 3 (hi current ranges) done ****')
     k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_AUTO')
 
-def step4(k26, chan):
+def step5(k26, dmm, chan):
     print('\n******** STEP 4 (contact 0) . Verify connections (fig 16-4):')
     print('*** no DMM; short L -> SL, and H -> SH')
     input("-------- press Enter when ready ---------")
@@ -293,17 +294,21 @@ def step4(k26, chan):
     k26.write(f'smu{chan}.contact.calibratelo(r0_lo, {cfg.cal.r0_actual}, r50_lo, {cfg.cal.r50_l})')
     k26.write(f'smu{chan}.contact.calibratehi(r0_hi, {cfg.cal.r0_actual}, r50_hi, {cfg.cal.r50_h})')
 
-def step5(k26, chan):
+def step6(k26, chan):
     today = dt.date.today()
     k26.write(f'smu{chan}.cal.date = os.time(year={today.year}, month={today.month}, day={today.day})')
     k26.write(f'smu{chan}.cal.due = os.time(year={today.year+1}, month={today.month}, day={today.day})')
     k26.write(f'smu{chan}.cal.save()')
     k26.write(f'smu{chan}.cal.lock()')
 
+# gather calsteps together
+calsteps = [None, None, step2, step3, step4, step5]
+
 def main():
     parser = argparse.ArgumentParser(description="K 2600 calibration script")
     parser.add_argument('-c', '--cfg', type=argparse.FileType('r'), required=True, help='config file')
     parser.add_argument('-s', '--chan', required=True, help='select channel [a|b]')
+    parser.add_argument('-p', '--step', type=int, help='run only step # [2..5]')
     parser.add_argument('-n', action='store_true', help='dry run, will not save cal')
     parser.add_argument('-t', action='store_true', help='test mode (dev)')
     parser.add_argument('-l', '--log', default='cal_tmp.log', help='output log file')
@@ -352,15 +357,21 @@ def main():
     if uptime < (2 * 60):
         print('******* WARNING **********')
         print(f'******* uptime ({uptime} minutes) below minimum recommended 2h **********')
-    step2(k26, dmm, args.chan)
-    step3(k26, dmm, args.chan)
-    step3b(k26, dmm, args.chan)
-    step4(k26, args.chan)
+
+    if args.step in range(2, 6):
+        steps = [args.step]
+        print(f'Running only step {steps}')
+    else:
+        steps = range(2,6)
+
+    for s in steps:
+        calsteps[s](k26, dmm, args.chan)
+
     if not dryrun:
-        print('\n******** STEP 5')
+        print('\n******** STEP 6')
         ans = input("-------- Save to EEPROM? y/Y to confirm, anything else cancels: ")
         if ans == 'y' or ans == 'Y':
-            step5(k26, args.chan)
+            step6(k26, args.chan)
 
 if __name__ == '__main__':
     main()

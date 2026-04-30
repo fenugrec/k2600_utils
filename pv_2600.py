@@ -401,10 +401,14 @@ def step7(k26, dmm, chan):
         step7_do_one(k26, dmm, chan, pvstep, -1)
     return
 
+# gather calsteps together
+calsteps = [None, None, step2, step3, step4, step5, step6, step7]
+
 def main():
     parser = argparse.ArgumentParser(description="K 2600 performance verif")
     parser.add_argument('-c', '--cfg', type=argparse.FileType('r'), required=True, help='config file')
     parser.add_argument('-s', '--chan', required=True, help='select channel [a|b]')
+    parser.add_argument('-p', '--step', type=int, help='run only step # [2..7]')
     parser.add_argument('-t', action='store_true', help='test mode (dev)')
     parser.add_argument('-l', '--log', default='pv_tmp.log', help='output log file')
     args = parser.parse_args(sys.argv[1:])
@@ -453,12 +457,16 @@ def main():
     # should be ~ equivalent to Menu->Save Setup->Recall->Factory
     k26.write('reset()')
     k26.write(f'smu{args.chan}.reset()')
-    step2(k26, dmm, args.chan)
-    step3(k26, dmm, args.chan)
-    step4(k26, dmm, args.chan)
-    step5(k26, dmm, args.chan)
-    step6(k26, dmm, args.chan)
-    step7(k26, dmm, args.chan)
+
+    if args.step in range(2, 8):
+        steps = [args.step]
+        print(f'Running only step {steps}')
+    else:
+        steps = range(2,8)
+
+    for s in steps:
+        calsteps[s](k26, dmm, args.chan)
+
     logf.info(f'\n*********** DONE *********')
     k26.write('abort') #return to local
 
