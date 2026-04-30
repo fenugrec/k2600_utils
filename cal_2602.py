@@ -169,9 +169,7 @@ def step2(k26, dmm, chan):
     print('*** DMM_LO -> SL, and DMM_LO -> L')
     print('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
-    f'smu{chan}.cal.unlock("KI0026XX")'
-    f'smu{chan}.reset()'
-    f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS'
+    k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
     dmm.config_v()
     for calstep in k2602_points.vcalsteps:
         print(f'V cal step: {calstep}')
@@ -229,7 +227,7 @@ def step3(k26, dmm, chan):
     print('*** DMM_LO -> L')
     print('*** DMM_HI -> H')
     input("-------- press Enter when ready ---------")
-    f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS'
+    k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm.config_i()
     for calstep in k2602_points.icalsteps:
         print(f'I cal step: {calstep}')
@@ -374,6 +372,9 @@ def main():
     if uptime < (2 * 60):
         print('******* WARNING **********')
         print(f'******* uptime ({uptime} minutes) below minimum recommended 2h **********')
+
+    k26.write(f'smu{chan}.cal.unlock("KI0026XX")')
+    k26.write(f'smu{chan}.reset()')
 
     if args.step in range(2, 6):
         steps = [args.step]
