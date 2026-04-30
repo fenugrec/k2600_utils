@@ -140,6 +140,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
         vrange = -calstep.range
         zval = -calstep.zval
         setpoint = -calstep.setpoint
+    logf.info(f'\n\t step2 {setpoint}')
     dmm.range_v(target)
     k26.write(f'smu{chan}.source.levelv = {zval}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
@@ -193,6 +194,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
         irange = -calstep.range
         zval = -calstep.zval
         setpoint = -calstep.setpoint
+    logf.info(f'\n\t step3 {setpoint}')
     dmm.range_i(target)
     k26.write(f'smu{chan}.source.leveli = {zval}')
     if calstep.config_dwell:
@@ -251,6 +253,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
         irange = -calstep.range
         zval = -calstep.zval
         setpoint = -calstep.setpoint
+    logf.info(f'\n\t step4 {setpoint}')
     dmm.range_i(target)
     k26.write(f'smu{chan}.source.leveli = {zval}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')

@@ -156,6 +156,7 @@ def step2_do_one(k26, dmm, chan, pvstep, sign):
     else:
         vrange = -pvstep.range
         target = -pvstep.target
+    logf.info(f'\n\t step2 {target}')
     dmm.range_v(target)
     k26.write(f'smu{chan}.source.levelv = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
@@ -193,6 +194,7 @@ def step3_do_one(k26, dmm, chan, pvstep, sign):
     else:
         vrange = -pvstep.range
         target = -pvstep.target
+    logf.info(f'\n\t step3 {target}')
     dmm.range_v(target)
     k26.write(f'smu{chan}.source.levelv = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
@@ -239,6 +241,7 @@ def step4_do_one(k26, dmm, chan, pvstep, sign):
     else:
         irange = -pvstep.range
         target = -pvstep.target
+    logf.info(f'\n\t step4 {target}')
     dmm.range_i(target)
     k26.write(f'smu{chan}.source.leveli = {target}')
     if pvstep.config_dwell:
@@ -279,6 +282,7 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
     else:
         irange = -pvstep.range
         target = -pvstep.target
+    logf.info(f'\n\t step5 {target}')
     dmm.range_i(target)
     k26.write(f'smu{chan}.source.leveli = {target}')
     if pvstep.config_dwell:
@@ -331,6 +335,7 @@ def step6_do_one(k26, dmm, chan, pvstep, sign):
     else:
         irange = -pvstep.range
         target = -pvstep.target
+    logf.info(f'\n\t step6 {target}')
     dmm.range_v(target * cfg.pv.r5_actual)
     k26.write(f'smu{chan}.source.leveli = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
@@ -372,6 +377,7 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     else:
         irange = -pvstep.range
         target = -pvstep.target
+    logf.info(f'\n\t step7 {target}')
     dmm.range_v(target * cfg.pv.r5_actual)
     k26.write(f'smu{chan}.source.leveli = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
