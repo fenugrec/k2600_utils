@@ -101,29 +101,30 @@ class calstep():
     sensemode: string
     sourceonly:bool = False #by default, cal both Source and Measure modes.
 
-vcalsteps = [
-        calstep(100e-3, 1e-12, 90e-3, 'SENSE_LOCAL'),
-        calstep(100e-3, 1e-10, 90e-3, 'SENSE_REMOTE'),
-        calstep(1, 1e-10, 0.9, 'SENSE_LOCAL'),
-        calstep(1, 1e-10, 0.9, 'SENSE_CALA', sourceonly=True),
-        calstep(6, 1e-10, 5.4, 'SENSE_LOCAL'),
-        calstep(40, 1e-10, 36, 'SENSE_LOCAL'),
-        ]
-icalsteps = [
-        calstep(100e-9, 1e-10, 90e-9, 'SENSE_LOCAL'),
-        calstep(1e-6, 1e-10, 900e-9, 'SENSE_LOCAL'),
-        calstep(10e-6, 1e-10, 9e-6, 'SENSE_LOCAL'),
-        calstep(100e-6, 1e-10, 90e-6, 'SENSE_LOCAL'),
-        calstep(1e-3, 1e-10, 900e-6, 'SENSE_LOCAL'),
-        calstep(1e-3, 1e-10, 900e-6, 'SENSE_CALA', sourceonly=True),
-        calstep(10e-3, 1e-10, 9e-3, 'SENSE_LOCAL'),
-        calstep(100e-3, 1e-10, 90e-3, 'SENSE_LOCAL'),
-        calstep(1, 1e-10, 900e-3, 'SENSE_LOCAL'),
-        ]
-icalsteps_hi = [
-        calstep(3, 1e-10, 2.4, 'SENSE_LOCAL'),
-        calstep(10, 1e-10, 2.4, 'SENSE_LOCAL'),
-        ]
+class k2602_points():
+    vcalsteps = [
+            calstep(100e-3, 1e-12, 90e-3, 'SENSE_LOCAL'),
+            calstep(100e-3, 1e-10, 90e-3, 'SENSE_REMOTE'),
+            calstep(1, 1e-10, 0.9, 'SENSE_LOCAL'),
+            calstep(1, 1e-10, 0.9, 'SENSE_CALA', sourceonly=True),
+            calstep(6, 1e-10, 5.4, 'SENSE_LOCAL'),
+            calstep(40, 1e-10, 36, 'SENSE_LOCAL'),
+            ]
+    icalsteps = [
+            calstep(100e-9, 1e-10, 90e-9, 'SENSE_LOCAL'),
+            calstep(1e-6, 1e-10, 900e-9, 'SENSE_LOCAL'),
+            calstep(10e-6, 1e-10, 9e-6, 'SENSE_LOCAL'),
+            calstep(100e-6, 1e-10, 90e-6, 'SENSE_LOCAL'),
+            calstep(1e-3, 1e-10, 900e-6, 'SENSE_LOCAL'),
+            calstep(1e-3, 1e-10, 900e-6, 'SENSE_CALA', sourceonly=True),
+            calstep(10e-3, 1e-10, 9e-3, 'SENSE_LOCAL'),
+            calstep(100e-3, 1e-10, 90e-3, 'SENSE_LOCAL'),
+            calstep(1, 1e-10, 900e-3, 'SENSE_LOCAL'),
+            ]
+    icalsteps_hi = [
+            calstep(3, 1e-10, 2.4, 'SENSE_LOCAL'),
+            calstep(10, 1e-10, 2.4, 'SENSE_LOCAL'),
+            ]
 
 #step2, do one voltage cal step; items 3b to 14 or 15b to 26 (once for each polarity)
 # sign : 1 or -1
@@ -168,7 +169,7 @@ def step2(k26, dmm, chan):
     f'smu{chan}.reset()'
     f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS'
     dmm.config_v()
-    for calstep in vcalsteps:
+    for calstep in k2602_points.vcalsteps:
         print(f'V cal step: {calstep}')
         k26.write(f'smu{chan}.source.rangev = {calstep.range}')
         k26.write(f'smu{chan}.sense = {calstep.sensemode}')
@@ -219,7 +220,7 @@ def step3(k26, dmm, chan):
     input("-------- press Enter when ready ---------")
     f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS'
     dmm.config_i()
-    for calstep in icalsteps:
+    for calstep in k2602_points.icalsteps:
         print(f'I cal step: {calstep}')
         k26.write(f'smu{chan}.source.rangei = {calstep.range}')
         k26.write(f'smu{chan}.sense = {calstep.sensemode}')
@@ -271,7 +272,7 @@ def step4(k26, dmm, chan):
     print('*** SMU_H -> 0R5 H')
     input("-------- press Enter when ready ---------")
     dmm.config_v()
-    for calstep in icalsteps_hi:
+    for calstep in k2602_points.icalsteps_hi:
         print(f'I cal step: {calstep}')
         k26.write(f'smu{chan}.source.rangei = {calstep.range}')
         k26.write(f'smu{chan}.sense = {calstep.sensemode}')
