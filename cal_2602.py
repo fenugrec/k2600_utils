@@ -17,8 +17,9 @@
 
 # TODO :
 # -tweak logger to output to file as well as print
+# -case-sensitive configparser instead of force-lowercase
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
-# -separate dwell times for 100mA + 1A too
+# -unify config naming of ipulse_ton etc vs config_dwell
 
 import pyvisa
 import argparse
@@ -100,6 +101,7 @@ class calstep():
     setpoint: float
     sensemode: string
     sourceonly:bool = False #by default, cal both Source and Measure modes.
+    config_dwell: str = None   #if set, will query .conf for given string and use its value. Only for I stuff
 
 class k2602_points():
     vcalsteps = [
@@ -118,8 +120,8 @@ class k2602_points():
             calstep(1e-3, 1e-10, 900e-6, 'SENSE_LOCAL'),
             calstep(1e-3, 1e-10, 900e-6, 'SENSE_CALA', sourceonly=True),
             calstep(10e-3, 1e-10, 9e-3, 'SENSE_LOCAL'),
-            calstep(100e-3, 1e-10, 90e-3, 'SENSE_LOCAL'),
-            calstep(1, 1e-10, 900e-3, 'SENSE_LOCAL'),
+            calstep(100e-3, 1e-10, 90e-3, 'SENSE_LOCAL', config_dwell='dly_100ma'),
+            calstep(1, 1e-10, 900e-3, 'SENSE_LOCAL', config_dwell='dly_1a'),
             ]
     icalsteps_hi = [
             calstep(3, 1e-10, 2.4, 'SENSE_LOCAL'),
@@ -181,6 +183,7 @@ def step2(k26, dmm, chan):
     k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_AUTO')
     return
 
+# step3 : current <= 1A
 def step3_do_one(k26, dmm, chan, calstep, sign):
     if sign > 0:
         irange = calstep.range
@@ -191,14 +194,19 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
         zval = -calstep.zval
         setpoint = -calstep.setpoint
     k26.write(f'smu{chan}.source.leveli = {zval}')
+    if calstep.config_dwell:
+        dwell = getattr(cfg.cal, calstep.config_dwell)
+    else:
+        dwell = cfg.cal.step_dwell
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
-    sleep(cfg.cal.step_dwell)
+    sleep(dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
     k26.write(f'z_rdg = smu{chan}.measure.i()')
     dmm_z = dmm.read_i()
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.leveli = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
+# use default dwell here since we presumably settled everything already?
     sleep(cfg.cal.step_dwell)
     k26.write(f'fs_rdg = smu{chan}.measure.i()')
     dmm_fs = dmm.read_i()
