@@ -18,7 +18,6 @@
 # - general config is held in external cal.conf to ideally avoid having to edit this script at all
 
 # TODO :
-# -tweak logger to output to file as well as print
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
 # -unify config naming of ipulse_ton etc vs config_dwell
 
@@ -127,15 +126,15 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     sleep(cfg.cal.step_dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
     k26r = lambda: k26_read_v(k26, chan)
-    smu_z = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'smu').median
-    dmm_z = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
+    smu_z = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'smu').median
+    dmm_z = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.levelv = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.step_dwell)
     k26r = lambda: k26_read_v(k26, chan)
-    smu_fs = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'smu').median
-    dmm_fs = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
+    smu_fs = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'smu').median
+    dmm_fs = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     logf.info(f'V cal step : range={vrange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
     k26.write(f'smu{chan}.source.calibratev({vrange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
@@ -187,16 +186,16 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     sleep(dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
     k26r = lambda: k26_read_i(k26, chan)
-    smu_z = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'smu').median
-    dmm_z = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'dmm').median
+    smu_z = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
+    dmm_z = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.leveli = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
 # use default dwell here since we presumably settled everything already?
     sleep(cfg.cal.step_dwell)
     k26r = lambda: k26_read_i(k26, chan)
-    smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'smu').median
-    dmm_fs = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'dmm').median
+    smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
+    dmm_fs = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     logf.info(f'I cal step : range={irange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
     k26.write(f'smu{chan}.source.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
@@ -244,15 +243,15 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
     k26r = lambda: k26_read_i(k26, chan)
-    smu_z = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'smu').median
-    dmm_z_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
+    smu_z = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
+    dmm_z_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.leveli = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
     k26r = lambda: k26_read_i(k26, chan)
-    smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'smu').median
-    dmm_fs_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
+    smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
+    dmm_fs_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
     sleep(cfg.cal.ipulse_toff)
@@ -341,8 +340,13 @@ def main():
     ## setup logging, test/debug options
     global logf
     logf = logging.getLogger()
-        
-    logging.basicConfig(filename=args.log, filemode='w')
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.INFO)
+    file_handler = logging.FileHandler(filename=args.log, mode='w')
+    #for stdout : don't print 'info:root' prefix
+    stdout_handler.setFormatter(logging.Formatter('%(message)s'))
+    logging.basicConfig(handlers=[file_handler, stdout_handler])
+
     global testmode
     testmode = args.t
     dryrun = args.n
@@ -364,7 +368,7 @@ def main():
     log_configtree(logf, parser)
 
     if dryrun:
-        logf.info(' ***************** dry run ! will not save cal ! ****************** ')
+        logf.info('***************** dry run ! will not save cal ! ****************** ')
     print('\n******** STEP 1 (prep)')
     k26_model = k26.query('print(localnode.model)')
     k26_sn = k26.query('print(localnode.serialno)')
@@ -393,6 +397,8 @@ def main():
         ans = input("-------- Save to EEPROM? y/Y to confirm, anything else cancels: ")
         if ans == 'y' or ans == 'Y':
             step6(k26, chan)
+
+    k26.write('abort') #return to local
 
 if __name__ == '__main__':
     main()

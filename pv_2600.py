@@ -136,12 +136,12 @@ def step2_do_one(k26, dmm, chan, pvstep, sign):
     else:
         vrange = -pvstep.range
         target = -pvstep.target
-    logf.info(f'\n\t step2 {target}')
+    logf.debug(f'\n\t step2 {target}')
     dmm.range_v(target)
     k26.write(f'smu{chan}.source.levelv = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.step_dwell)
-    dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.info, 'dmm').median
+    dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
     print_result(vrange, target, dmm_rdg, delta, pvstep.tol)
@@ -154,7 +154,7 @@ def step2(k26, dmm, chan, point=None):
     print('*** DMM_LO -> SL, and DMM_LO -> L')
     print('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
-    logf.info('\n STEP 2')
+    logf.debug('\n STEP 2')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
     k26.write(f'smu{chan}.sense = smu{chan}.SENSE_REMOTE')
     dmm.config_v()
@@ -177,12 +177,12 @@ def step3_do_one(k26, dmm, chan, pvstep, sign):
     else:
         vrange = -pvstep.range
         target = -pvstep.target
-    logf.info(f'\n\t step3 {target}')
+    logf.debug(f'\n\t step3 {target}')
     dmm.range_v(target)
     k26.write(f'smu{chan}.source.levelv = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.step_dwell)
-    dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.info, 'dmm').median
+    dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
     delta = dmm_rdg - target
     logf.info(f'V meas initial: range={vrange} tgt={target} rdg={dmm_rdg} delta={delta}')
 
@@ -190,8 +190,8 @@ def step3_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.levelv = {target - delta}')
     sleep(cfg.pv.step_dwell)
     k26r = lambda: k26_read_v(k26, chan)
-    smu_rdg = read_multi(k26r, cfg.pv.discard_v, cfg.pv.keep_v, logf.info, 'smu').median
-    dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.info, 'dmm').median
+    smu_rdg = read_multi(k26r, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'smu').median
+    dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - smu_rdg
     logf.info(f'V meas final: range={vrange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
@@ -205,7 +205,7 @@ def step3(k26, dmm, chan, point=None):
     print('*** DMM_LO -> SL, and DMM_LO -> L')
     print('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
-    logf.info('\n STEP 3')
+    logf.debug('\n STEP 3')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
     k26.write(f'smu{chan}.sense = smu{chan}.SENSE_REMOTE')
     dmm.config_v()
@@ -227,7 +227,7 @@ def step4_do_one(k26, dmm, chan, pvstep, sign):
     else:
         irange = -pvstep.range
         target = -pvstep.target
-    logf.info(f'\n\t step4 {target}')
+    logf.debug(f'\n\t step4 {target}')
     dmm.range_i(target)
     k26.write(f'smu{chan}.source.leveli = {target}')
     if pvstep.config_dwell:
@@ -236,7 +236,7 @@ def step4_do_one(k26, dmm, chan, pvstep, sign):
         dwell = cfg.pv.step_dwell
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(dwell)
-    dmm_rdg = read_multi(dmm.read_i, cfg.pv.discard_i, cfg.pv.keep_i, logf.info, 'dmm').median
+    dmm_rdg = read_multi(dmm.read_i, cfg.pv.discard_i, cfg.pv.keep_i, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
     print_result(irange, target, dmm_rdg, delta, pvstep.tol)
@@ -249,7 +249,7 @@ def step4(k26, dmm, chan, point=None):
     print('*** DMM_LO -> L')
     print('*** DMM_HI -> H')
     input("-------- press Enter when ready ---------")
-    logf.info('\n STEP 4')
+    logf.debug('\n STEP 4')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm.config_i()
     print_result_header()
@@ -271,7 +271,7 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
     else:
         irange = -pvstep.range
         target = -pvstep.target
-    logf.info(f'\n\t step5 {target}')
+    logf.debug(f'\n\t step5 {target}')
     dmm.range_i(target)
     k26.write(f'smu{chan}.source.leveli = {target}')
     if pvstep.config_dwell:
@@ -281,7 +281,7 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     # use configurable dwell only first time ?
     sleep(dwell)
-    dmm_rdg = read_multi(dmm.read_i, cfg.pv.discard_i, cfg.pv.keep_i, logf.info, 'dmm').median
+    dmm_rdg = read_multi(dmm.read_i, cfg.pv.discard_i, cfg.pv.keep_i, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
     logf.info(f'I meas initial: range={irange} tgt={target} rdg={dmm_rdg} delta={delta}')
@@ -291,8 +291,8 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.step_dwell)
     k26r = lambda: k26_read_i(k26, chan)
-    smu_rdg = read_multi(k26r, cfg.pv.discard_i, cfg.pv.keep_i, logf.info, 'smu').median
-    dmm_rdg = read_multi(dmm.read_i, cfg.pv.discard_i, cfg.pv.keep_i, logf.info, 'dmm').median
+    smu_rdg = read_multi(k26r, cfg.pv.discard_i, cfg.pv.keep_i, logf.debug, 'smu').median
+    dmm_rdg = read_multi(dmm.read_i, cfg.pv.discard_i, cfg.pv.keep_i, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - smu_rdg
     logf.info(f'I meas final: range={irange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
@@ -306,7 +306,7 @@ def step5(k26, dmm, chan, point=None):
     print('*** DMM_LO -> SL, and DMM_LO -> L')
     print('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
-    logf.info('\n STEP 5')
+    logf.debug('\n STEP 5')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm.config_i()
     print_result_header()
@@ -327,12 +327,12 @@ def step6_do_one(k26, dmm, chan, pvstep, sign):
     else:
         irange = -pvstep.range
         target = -pvstep.target
-    logf.info(f'\n\t step6 {target}')
+    logf.debug(f'\n\t step6 {target}')
     dmm.range_v(target * cfg.pv.r5_actual)
     k26.write(f'smu{chan}.source.leveli = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
-    dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.info, 'dmm').median
+    dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
@@ -350,7 +350,7 @@ def step6(k26, dmm, chan, point=None):
     print('*** SMU_L -> 0R5 L')
     print('*** SMU_H -> 0R5 H')
     input("-------- press Enter when ready ---------")
-    logf.info('\n STEP 6')
+    logf.debug('\n STEP 6')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm.config_v()
     print_result_header()
@@ -372,12 +372,12 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     else:
         irange = -pvstep.range
         target = -pvstep.target
-    logf.info(f'\n\t step7 {target}')
+    logf.debug(f'\n\t step7 {target}')
     dmm.range_v(target * cfg.pv.r5_actual)
     k26.write(f'smu{chan}.source.leveli = {target}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
-    dmm_raw = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.info, 'dmm').median
+    dmm_raw = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
@@ -388,9 +388,9 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.leveli = {target - delta}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
-    dmm_raw = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.info, 'dmm').median
+    dmm_raw = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
     k26r = lambda: k26_read_i(k26, chan)
-    smu_rdg = read_multi(k26r, cfg.pv.discard_i, cfg.pv.keep_i, logf.info, 'smu').median
+    smu_rdg = read_multi(k26r, cfg.pv.discard_i, cfg.pv.keep_i, logf.debug, 'smu').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     print("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
@@ -409,7 +409,7 @@ def step7(k26, dmm, chan, point=None):
     print('*** SMU_L -> 0R5 L')
     print('*** SMU_H -> 0R5 H')
     input("-------- press Enter when ready ---------")
-    logf.info('\n STEP 7')
+    logf.debug('\n STEP 7')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
     dmm.config_v()
     print_result_header()
@@ -453,8 +453,13 @@ def main():
     ## setup logging, test/debug options
     global logf
     logf = logging.getLogger()
-        
-    logging.basicConfig(filename=args.log, filemode='w')
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.INFO)
+    file_handler = logging.FileHandler(filename=args.log, mode='w')
+    #for stdout : don't print 'info:root' prefix
+    stdout_handler.setFormatter(logging.Formatter('%(message)s'))
+    logging.basicConfig(handlers=[file_handler, stdout_handler])
+
     global testmode
     testmode = args.t
 
