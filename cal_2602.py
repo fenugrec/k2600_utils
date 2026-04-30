@@ -139,19 +139,19 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
         zval = -calstep.zval
         setpoint = -calstep.setpoint
     logf.info(f'\n\t step2 {setpoint}')
-    dmm.range_v(target)
+    dmm.range_v(setpoint)
     k26.write(f'smu{chan}.source.levelv = {zval}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.step_dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
-    k26r = lambda: k26_read_v(k26)
+    k26r = lambda: k26_read_v(k26, chan)
     smu_z = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'smu').median
     dmm_z = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.levelv = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.step_dwell)
-    k26r = lambda: k26_read_v(k26)
+    k26r = lambda: k26_read_v(k26, chan)
     smu_fs = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'smu').median
     dmm_fs = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
@@ -192,7 +192,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
         zval = -calstep.zval
         setpoint = -calstep.setpoint
     logf.info(f'\n\t step3 {setpoint}')
-    dmm.range_i(target)
+    dmm.range_i(setpoint)
     k26.write(f'smu{chan}.source.leveli = {zval}')
     if calstep.config_dwell:
         dwell = getattr(cfg.cal, calstep.config_dwell)
@@ -201,7 +201,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(dwell)
 # TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
-    k26r = lambda: k26_read_i(k26)
+    k26r = lambda: k26_read_i(k26, chan)
     smu_z = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'smu').median
     dmm_z = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
@@ -209,7 +209,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
 # use default dwell here since we presumably settled everything already?
     sleep(cfg.cal.step_dwell)
-    k26r = lambda: k26_read_i(k26)
+    k26r = lambda: k26_read_i(k26, chan)
     smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'smu').median
     dmm_fs = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
@@ -250,18 +250,18 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
         zval = -calstep.zval
         setpoint = -calstep.setpoint
     logf.info(f'\n\t step4 {setpoint}')
-    dmm.range_i(target)
+    dmm.range_i(setpoint)
     k26.write(f'smu{chan}.source.leveli = {zval}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
-    k26r = lambda: k26_read_i(k26)
+    k26r = lambda: k26_read_i(k26, chan)
     smu_z = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'smu').median
     dmm_z_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     k26.write(f'smu{chan}.source.leveli = {setpoint}')
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
-    k26r = lambda: k26_read_i(k26)
+    k26r = lambda: k26_read_i(k26, chan)
     smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.info, 'smu').median
     dmm_fs_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.info, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
@@ -337,6 +337,7 @@ def main():
     if (args.chan != 'a') and (args.chan != 'b'):
         print("bad channel, must be a or b")
         exit()
+    chan = args.chan
 
     ## setup logging, test/debug options
     global logf
@@ -359,7 +360,7 @@ def main():
         logf.setLevel(logging.INFO)
 
     ## start cal process
-    logf.info(f'start cal on {dt.datetime.now().isoformat()}, SMU chan {args.chan}')
+    logf.info(f'start cal on {dt.datetime.now().isoformat()}, SMU chan {chan}')
     logf.info(f'Using following parameters for cal:')
     log_configtree(logf, parser)
 
@@ -385,14 +386,14 @@ def main():
         steps = range(2,6)
 
     for s in steps:
-        calsteps[s](k26, dmm, args.chan)
+        calsteps[s](k26, dmm, chan)
         k26_get_errors(k26)
 
     if not dryrun:
         print('\n******** STEP 6')
         ans = input("-------- Save to EEPROM? y/Y to confirm, anything else cancels: ")
         if ans == 'y' or ans == 'Y':
-            step6(k26, args.chan)
+            step6(k26, chan)
 
 if __name__ == '__main__':
     main()
