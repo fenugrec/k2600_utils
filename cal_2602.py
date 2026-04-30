@@ -20,7 +20,6 @@
 # -check errors with *STB?
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
 # -separate dwell times for 100mA + 1A too
-# -ability to run just one step / one range
 
 import pyvisa
 import argparse
@@ -341,6 +340,7 @@ def main():
         k26 = open_k26(rm)
         dmm_res = rm.open_resource(cfg.dmm.res)
         dmm = dmm_3478(dmm_res)
+        logf.setLevel(logging.INFO)
 
     ## start cal process
     logf.info(f'start cal on {dt.datetime.now().isoformat()}, SMU chan {args.chan}')
