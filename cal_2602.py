@@ -18,6 +18,8 @@
 # -tweak logger to output to file as well as print
 # -check errors with *STB?
 # -can probably replace 'smu{chan}' with 'smux' and then assign (in lua) smux=smua or smub 
+# -separate dwell times for 100mA + 1A too
+# -ability to run just one step / one range
 
 import pyvisa
 import argparse

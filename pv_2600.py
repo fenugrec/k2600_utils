@@ -105,6 +105,7 @@ class pvstep():
     range: float
     target: float
     tol: float # such that 'acceptable range = [(target - tol) ... (target + tol)]
+    config_dwell: str = None   #if set, will query .conf for given string and use its value. Only for I stuff
 
 class k2602_limits():
     vsource_points = [
@@ -126,8 +127,8 @@ class k2602_limits():
             pvstep(100e-6, 90e-6, 57e-9),
             pvstep(1e-3, 900e-6, 470e-9),
             pvstep(10e-3, 9e-3, 5.7e-6),
-            pvstep(100e-3, 90e-3, 47e-6),
-            pvstep(1, 900e-3, 1.35e-6),
+            pvstep(100e-3, 90e-3, 47e-6, config_dwell='dly_100ma'),
+            pvstep(1, 900e-3, 1.35e-6, config_dwell='dly_1a'),
             ]
     isource_hi_points = [
             pvstep(3, 2.4, 2.94e-3),
@@ -139,8 +140,8 @@ class k2602_limits():
             pvstep(100e-6, 90e-6, 43e-9),
             pvstep(1e-3, 900e-6, 380e-9),
             pvstep(10e-3, 9e-3, 4.3e-6),
-            pvstep(100e-3, 90e-3, 38e-6),
-            pvstep(1, 900e-3, 1.77e-3),
+            pvstep(100e-3, 90e-3, 38e-6, config_dwell='dly_100ma'),
+            pvstep(1, 900e-3, 1.77e-3, config_dwell='dly_1a'),
             ]
     imeas_hi_points = [
             pvstep(3, 2.4, 4.7e-3),
@@ -232,8 +233,12 @@ def step4_do_one(k26, dmm, chan, pvstep, sign):
         irange = -pvstep.range
         target = -pvstep.target
     k26.write(f'smu{chan}.source.leveli = {target}')
+    if pvstep.config_dwell:
+        dwell = getattr(cfg.pv, pvstep.config_dwell)
+    else:
+        dwell = cfg.pv.step_dwell
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
-    sleep(cfg.pv.step_dwell)
+    sleep(dwell)
     dmm_rdg = dmm_read_i(dmm)
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
@@ -266,14 +271,21 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
         irange = -pvstep.range
         target = -pvstep.target
     k26.write(f'smu{chan}.source.leveli = {target}')
+    if pvstep.config_dwell:
+        dwell = getattr(cfg.pv, pvstep.config_dwell)
+    else:
+        dwell = cfg.pv.step_dwell
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
-    sleep(cfg.pv.step_dwell)
+    # use configurable dwell only first time ?
+    sleep(dwell)
     dmm_rdg = dmm_read_i(dmm)
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - target
     logf.info(f'I meas initial: range={irange} tgt={target} rdg={dmm_rdg} delta={delta}')
+
     # adjust SMU once, should be 'close enough'
     k26.write(f'smu{chan}.source.leveli = {target - delta}')
+    k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     sleep(cfg.pv.step_dwell)
     smu_rdg = k26.query_ascii_values(f'print(smu{chan}.measure.i())')[0]
     dmm_rdg = dmm_read_i(dmm)
@@ -291,7 +303,7 @@ def step5(k26, dmm, chan):
     input("-------- press Enter when ready ---------")
     logf.info('\n STEP 5')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
-    dmm_config_v(dmm)
+    dmm_config_i(dmm)
     print_result_header()
     for pvstep in k2602_limits.imeas_points:
         k26.write(f'smu{chan}.source.rangev = {pvstep.range}')
