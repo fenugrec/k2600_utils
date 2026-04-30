@@ -6,7 +6,7 @@
 # **** usage:
 # - copy/edit .conf file for connection settings and cal resistor values
 # - customize dmm.py as required for DMM to be used
-# - dry-run to go through entire cal without saving to eeprom
+# - dry-run to go through entire cal without saving to eeprom (easily reverted with reset())
 # - can run individual 'steps' and test points
 
 # **** code structure
@@ -157,7 +157,7 @@ def step2(k26, dmm, chan, point=None):
     for calpoint in points:
         print(f'V cal point: {calpoint}')
         k26.write(f'smu{chan}.source.rangev = {calpoint.range}')
-        k26.write(f'smu{chan}.sense = {calpoint.sensemode}')
+        k26.write(f'smu{chan}.sense = smu{chan}.{calpoint.sensemode}')
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_POSITIVE')
         step2_do_one(k26, dmm, chan, calpoint, 1)
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_NEGATIVE')
@@ -218,7 +218,7 @@ def step3(k26, dmm, chan, point=None):
     for calpoint in points:
         print(f'I cal point: {calpoint}')
         k26.write(f'smu{chan}.source.rangei = {calpoint.range}')
-        k26.write(f'smu{chan}.sense = {calpoint.sensemode}')
+        k26.write(f'smu{chan}.sense = smu{chan}.{calpoint.sensemode}')
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_POSITIVE')
         step3_do_one(k26, dmm, chan, calpoint, 1)
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_NEGATIVE')
@@ -278,13 +278,14 @@ def step4(k26, dmm, chan, point=None):
     for calpoint in points:
         print(f'I cal point: {calpoint}')
         k26.write(f'smu{chan}.source.rangei = {calpoint.range}')
-        k26.write(f'smu{chan}.sense = {calpoint.sensemode}')
+        k26.write(f'smu{chan}.sense = smu{chan}.{calpoint.sensemode}')
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_POSITIVE')
         step4_do_one(k26, dmm, chan, calpoint, 1)
         k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_NEGATIVE')
         step4_do_one(k26, dmm, chan, calpoint, -1)
     print('***** step 3 (hi current ranges) done ****')
     k26.write(f'smu{chan}.cal.polarity = smu{chan}.CAL_AUTO')
+    return
 
 def step5(k26, dmm, chan, point=None):
     print('\n******** STEP 4 (contact 0) . Verify connections (fig 16-4):')
