@@ -210,7 +210,7 @@ def step3_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - smu_rdg
     logf.info(f'V meas final: range={vrange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
-    print_result(vrange, target, dmm_rdg, delta, pvstep.tol)
+    print_result(vrange, target, smu_rdg, delta, pvstep.tol)
     k26_get_errors(k26)
     return
 
@@ -303,7 +303,7 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
     delta = dmm_rdg - smu_rdg
     logf.info(f'I meas final: range={irange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
-    print_result(irange, target, dmm_rdg, delta, pvstep.tol)
+    print_result(irange, target, smu_rdg, delta, pvstep.tol)
     k26_get_errors(k26)
     return
 
@@ -396,7 +396,7 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     dmm_rdg = dmm_raw / cfg.pv.r5_actual
     delta = dmm_rdg - smu_rdg
     logf.info(f'I meas final: range={irange} vsense={dmm_raw} i_calc={dmm_rdg} smu={smu_rdg} delta={delta}')
-    print_result(irange, target, dmm_rdg, delta, pvstep.tol)
+    print_result(irange, target, smu_rdg, delta, pvstep.tol)
     k26_get_errors(k26)
     return
 
