@@ -17,8 +17,6 @@
 
 import pyvisa
 import argparse
-import ast
-import configparser
 from dataclasses import dataclass
 import datetime as dt
 import logging
@@ -26,34 +24,7 @@ import random
 import sys
 from time import sleep
 from k26_common import *
-
-# some config class magic, https://alexandra-zaharia.github.io/posts/python-configuration-and-dataclasses/
-# modified to use ast.literal_eval() to ~safely convert strings to numeric types when applicable
-# idea is to digest a ini-style .conf file into a class whose members can be used like 'cfg.dut.baud'
-class DynamicConfig:
-    def __init__(self, conf):
-        if not isinstance(conf, dict):
-            raise TypeError(f'dict expected, found {type(conf).__name__}')
-
-        self._raw = conf
-        for key, value in self._raw.items():
-            setattr(self, key, ast.literal_eval(value))
-
-class DynamicConfigIni:
-    def __init__(self, conf):
-        if not isinstance(conf, configparser.ConfigParser):
-            raise TypeError(f'ConfigParser expected, found {type(conf).__name__}')
-
-        self._raw = conf
-        for key, value in self._raw.items():
-            setattr(self, key, DynamicConfig(dict(value.items())))
-
-# helper func to pretty print config tree
-def log_configtree(logger, parser: configparser):
-    for sec in parser.sections():
-        for key in parser[sec]:
-            rawval = parser[sec][key]
-            logger.info(f'\t{sec}.{key}={rawval}')
+from magiconfig import magiconfig
 
 def open_k26(resman):
     k26_res = resman.open_resource(cfg.dut.res)
@@ -138,11 +109,8 @@ def main():
     parser.add_argument('-l', '--log', default='inltmp.log', help='output log file')
     args = parser.parse_args(sys.argv[1:])
 
-    parser = configparser.ConfigParser()
-    parser.optionxform = lambda option: option  # hax to make config case-sensitive instead of force-lowercase
-    parser.read_file(args.cfg)
     global cfg
-    cfg = DynamicConfigIni(parser)
+    cfg = magiconfig(args.cfg)
 
     chan = args.chan
     if (chan != 'a') and (chan != 'b'):
@@ -190,7 +158,7 @@ def main():
     k26.write(f'smux = smu{chan}')  #cleverness
     logf.info(f'start INL on {dt.datetime.now().isoformat()}, SMU chan {chan}')
     logf.info(f'Using following parameters:')
-    log_configtree(logf, parser)
+    cfg.print_configtree(logf)
 
     k26_model = k26.query('print(localnode.model)')
     k26_sn = k26.query('print(localnode.serialno)')
