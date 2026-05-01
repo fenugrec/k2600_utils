@@ -25,7 +25,6 @@ import logging
 import random
 import sys
 from time import sleep
-from dmm import *
 from k26_common import *
 
 # some config class magic, https://alexandra-zaharia.github.io/posts/python-configuration-and-dataclasses/
@@ -167,6 +166,12 @@ def main():
     logf.addHandler(stdout_handler)
         
     logging.basicConfig(filename=args.log, filemode='w')
+
+    if '3478' in cfg.dmm.driver:
+        from dmm_3478 import dmm_3478
+    elif 'xdevs' in cfg.dmm.driver:
+        from dmm_xdevs import dmm_xdevs
+
     global testmode
     testmode = args.t
 

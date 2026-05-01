@@ -24,7 +24,6 @@ import datetime as dt
 import logging
 import sys
 from time import sleep
-from dmm import *
 from k26_common import *
 
 #func to format each measurement result
@@ -459,6 +458,11 @@ def main():
     #for stdout : don't print 'info:root' prefix
     stdout_handler.setFormatter(logging.Formatter('%(message)s'))
     logging.basicConfig(handlers=[file_handler, stdout_handler])
+
+    if '3478' in cfg.dmm.driver:
+        from dmm_3478 import dmm_3478
+    elif 'xdevs' in cfg.dmm.driver:
+        from dmm_xdevs import dmm_xdevs
 
     global testmode
     testmode = args.t
