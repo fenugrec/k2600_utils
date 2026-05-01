@@ -163,9 +163,10 @@ def main():
     logf = logging.getLogger()
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setLevel(logging.INFO)
-    logf.addHandler(stdout_handler)
-        
-    logging.basicConfig(filename=args.log, filemode='w')
+    file_handler = logging.FileHandler(filename=args.log, mode='w')
+    #for stdout : don't print 'info:root' prefix
+    stdout_handler.setFormatter(logging.Formatter('%(message)s'))
+    logging.basicConfig(handlers=[file_handler, stdout_handler])
 
     if '3478' in cfg.dmm.driver:
         from dmm_3478 import dmm_3478
