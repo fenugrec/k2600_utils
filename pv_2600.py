@@ -25,9 +25,14 @@ from time import sleep
 from k26_common import *
 from magiconfig import magiconfig
 
+#XXX print wrapper, todo move to common code
+#tee to both stdout and logfile
+def logprint(*args, **kwargs):
+    print(*args, **kwargs)
+
 #func to format each measurement result
 def print_result_header():
-    print(f'\n{'range':10}\t{'target':10}\t{'reading':10}\t{'delta':20}\t{'tol':10}\t{'pass':10}')
+    logprint(f'\n{'range':10}\t{'target':10}\t{'reading':10}\t{'delta':20}\t{'tol':10}\t{'pass':10}')
 
 def print_result(range, tgt, rdg, delta, tol):
     delta_ppm = (delta / tgt) * 1e6
@@ -35,7 +40,7 @@ def print_result(range, tgt, rdg, delta, tol):
         result = '* FAIL *'
     else:
         result = 'OK'
-    print(f'{range:8g}\t{tgt:10.7g}\t{rdg:10.7g}\t'
+    logprint(f'{range:8g}\t{tgt:10.7g}\t{rdg:10.7g}\t'
         + f'{delta:10.7g} ({delta_ppm:.4g} ppm)\t{tol:10.7g}\t{result}')
 
 def open_k26(resman):
@@ -43,8 +48,9 @@ def open_k26(resman):
     k26_res.baud_rate = cfg.dut.baud
     k26_res.flow_control = pyvisa.constants.ControlFlow[cfg.dut.flow]
     idstring = k26_res.query('*idn?')
+    logprint(f'k16 connected: {idstring}')
     if '2602' not in idstring:
-        print("ID query mismatch")
+        logprint("ID query mismatch")
         quit()
     return k26_res
 
@@ -120,9 +126,9 @@ def step2_do_one(k26, dmm, chan, pvstep, sign):
 
 #step2 : output volt accu test; p. 15-6
 def step2(k26, dmm, chan, point=None):
-    print('\n******** STEP 2 (output voltage) . Verify connections:')
-    print('*** DMM_LO -> SL, and DMM_LO -> L')
-    print('*** DMM_HI -> SH, and DMM_HI -> H')
+    logprint('\n******** STEP 2 (output voltage) . Verify connections:')
+    logprint('*** DMM_LO -> SL, and DMM_LO -> L')
+    logprint('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 2')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
@@ -171,9 +177,9 @@ def step3_do_one(k26, dmm, chan, pvstep, sign):
 
 #step3 : volt meas accu test; p. 15-8
 def step3(k26, dmm, chan, point=None):
-    print('\n******** STEP 3 (voltage meas. accu) . Verify connections:')
-    print('*** DMM_LO -> SL, and DMM_LO -> L')
-    print('*** DMM_HI -> SH, and DMM_HI -> H')
+    logprint('\n******** STEP 3 (voltage meas. accu) . Verify connections:')
+    logprint('*** DMM_LO -> SL, and DMM_LO -> L')
+    logprint('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 3')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
@@ -215,9 +221,9 @@ def step4_do_one(k26, dmm, chan, pvstep, sign):
 
 #step4: low I source test; p. 15-9
 def step4(k26, dmm, chan, point=None):
-    print('\n******** STEP 4 (I source <= 1A). Verify connections:')
-    print('*** DMM_LO -> L')
-    print('*** DMM_HI -> H')
+    logprint('\n******** STEP 4 (I source <= 1A). Verify connections:')
+    logprint('*** DMM_LO -> L')
+    logprint('*** DMM_HI -> H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 4')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
@@ -272,9 +278,9 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
 
 #step5 : low I meas accu test; p. 15-14
 def step5(k26, dmm, chan, point=None):
-    print('\n******** STEP 5 (I meas <= 1A) . Verify connections:')
-    print('*** DMM_LO -> SL, and DMM_LO -> L')
-    print('*** DMM_HI -> SH, and DMM_HI -> H')
+    logprint('\n******** STEP 5 (I meas <= 1A) . Verify connections:')
+    logprint('*** DMM_LO -> SL, and DMM_LO -> L')
+    logprint('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 5')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
@@ -304,7 +310,7 @@ def step6_do_one(k26, dmm, chan, pvstep, sign):
     sleep(cfg.pv.ipulse_ton)
     dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
-    print("post pulse cooldown...")
+    logprint("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
     dmm_rdg = dmm_raw / cfg.pv.r5_actual
     delta = dmm_rdg - target
@@ -314,11 +320,11 @@ def step6_do_one(k26, dmm, chan, pvstep, sign):
 
 #step6: high I source test; p. 15-9
 def step6(k26, dmm, chan, point=None):
-    print('\n******** STEP 6 (I source > 1A). Verify connections:')
-    print('*** DMM_LO -> 0R5 sense_L')
-    print('*** DMM_HI -> 0R5 sense_H')
-    print('*** SMU_L -> 0R5 L')
-    print('*** SMU_H -> 0R5 H')
+    logprint('\n******** STEP 6 (I source > 1A). Verify connections:')
+    logprint('*** DMM_LO -> 0R5 sense_L')
+    logprint('*** DMM_HI -> 0R5 sense_H')
+    logprint('*** SMU_L -> 0R5 L')
+    logprint('*** SMU_H -> 0R5 H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 6')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
@@ -349,7 +355,7 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     sleep(cfg.pv.ipulse_ton)
     dmm_raw = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
-    print("post pulse cooldown...")
+    logprint("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
     dmm_rdg = dmm_raw / cfg.pv.r5_actual
     delta = dmm_rdg - target
@@ -362,7 +368,7 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
     k26r = lambda: k26_read_i(k26, chan)
     smu_rdg = read_multi(k26r, cfg.pv.discard_i, cfg.pv.keep_i, logf.debug, 'smu').median
     k26.write(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
-    print("post pulse cooldown...")
+    logprint("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
     dmm_rdg = dmm_raw / cfg.pv.r5_actual
     delta = dmm_rdg - smu_rdg
@@ -373,11 +379,11 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
 
 #step7 : high I meas accu test; p. 15-14
 def step7(k26, dmm, chan, point=None):
-    print('\n******** STEP 7 (I meas > 1A) . Verify connections (fig 15-3):')
-    print('*** DMM_LO -> 0R5 sense_L')
-    print('*** DMM_HI -> 0R5 sense_H')
-    print('*** SMU_L -> 0R5 L')
-    print('*** SMU_H -> 0R5 H')
+    logprint('\n******** STEP 7 (I meas > 1A) . Verify connections (fig 15-3):')
+    logprint('*** DMM_LO -> 0R5 sense_L')
+    logprint('*** DMM_HI -> 0R5 sense_H')
+    logprint('*** SMU_L -> 0R5 L')
+    logprint('*** SMU_H -> 0R5 H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 7')
     k26.write(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
@@ -409,12 +415,12 @@ def main():
     cfg = magiconfig(args.cfg)
 
     if (args.chan != 'a') and (args.chan != 'b'):
-        print("bad channel, must be a or b")
+        logprint("bad channel, must be a or b")
         exit()
 
     point = args.point
     if (point and not args.step):
-        print('cannot specify single point without step !')
+        logprint('cannot specify single point without step !')
         exit()
 
     ## setup logging, test/debug options
@@ -460,15 +466,15 @@ def main():
     uptime = round(k26.query_ascii_values('print(os.clock())')[0]/60)
     logf.info(f'connected to model {k26_model}, sn # {k26_sn}, rev {k26_rev}; uptime {uptime} min.')
     if uptime < (2 * 60):
-        print('******* WARNING **********')
-        print(f'******* uptime ({uptime} minutes) below minimum recommended 2h **********')
+        logprint('******* WARNING **********')
+        logprint(f'******* uptime ({uptime} minutes) below minimum recommended 2h **********')
     # should be ~ equivalent to Menu->Save Setup->Recall->Factory
     k26.write('reset()')
     k26.write(f'smu{args.chan}.reset()')
 
     if args.step in range(2, 8):
         steps = [args.step]
-        print(f'Running only step {steps}')
+        logprint(f'Running only step {steps}')
     else:
         steps = range(2,8)
 
