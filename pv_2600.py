@@ -485,6 +485,8 @@ def main():
     # should be ~ equivalent to Menu->Save Setup->Recall->Factory
     k26_writelog('reset()')
     k26_writelog(f'smu{args.chan}.reset()')
+    chan_u=args.chan.capitalize()
+    k26_writelog(f'display.screen = display.SMU{chan_u}')
 
     if args.step in range(2, 8):
         steps = [args.step]
@@ -496,6 +498,7 @@ def main():
         calsteps[s](k26, dmm, args.chan, point)
 
     logf.info(f'\n*********** DONE *********')
+    k26_writelog('display.screen = display.SMUA_SMUB')
     k26_writelog('abort') #return to local
 
 
