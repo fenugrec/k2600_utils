@@ -95,6 +95,7 @@ def sweep(k26, dmm, vrange, points):
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
     for pt in points:
         k26.write(f'smux.source.levelv = {pt}')
+        sleep(cfg.inl.sweep_dwell)
         dmm_fs = read_multi(dmm.read_v, cfg.inl.discard, cfg.inl.keep, lambda *x:None)
         print_reading(pt, dmm_fs)
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
