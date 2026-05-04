@@ -31,11 +31,11 @@ Currently this scripts only works with following DMMs:
 
 dmm_temp = 23.0
 dmm_type = "3458a"                                  # Reference DMM type. Supported types listed in legend above
-hw_interface_type = "visa"                           # Please select vxi or visa or linux-gpib
+hw_interface_type = "vxi"                           # Please select vxi or visa or linux-gpib
 dmm_nplc = 10                                       # NPLC for DMM
 run_acal = False                                    # If "True" then execute ACAL ALL on 3458A before calibration
-gpib_addr_dmm = 3                                   # GPIB address of DUT K2400
-gpib_vxi_ip = "192.168.1.12"                        # TCP/IP address of Agilent E5810A GPIB-LAN gateway
+gpib_addr_dmm = 1                                   # GPIB address of DUT K2400
+gpib_vxi_ip = "192.168.1.10"                        # TCP/IP address of Agilent E5810A GPIB-LAN gateway
 dmm_vxi_ip = "192.168.1.12"                         # TCP/IP address for LAN-equipped reference DMM (e.g. DMM7510)
 
 #####################################################################################################################
