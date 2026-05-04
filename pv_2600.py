@@ -234,6 +234,9 @@ def step4(k26, dmm, chan, point=None):
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 4')
     k26_writelog(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
+    k26_writelog(f'smu{chan}.source.limitv = 10')
+    k26_writelog(f'smu{chan}.source.levelv = 0')
+    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
     dmm.config_i()
     print_result_header()
     points = k2602_limits.isource_points
@@ -291,6 +294,7 @@ def step5(k26, dmm, chan, point=None):
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 5')
     k26_writelog(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
+    k26_writelog(f'smu{chan}.source.limitv = 10')
     dmm.config_i()
     print_result_header()
     points = k2602_limits.imeas_points
@@ -335,6 +339,7 @@ def step6(k26, dmm, chan, point=None):
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 6')
     k26_writelog(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
+    k26_writelog(f'smu{chan}.source.limitv = 10')
     dmm.config_v()
     print_result_header()
     points = k2602_limits.isource_hi_points
@@ -394,6 +399,7 @@ def step7(k26, dmm, chan, point=None):
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 7')
     k26_writelog(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
+    k26_writelog(f'smu{chan}.source.limitv = 10')
     dmm.config_v()
     print_result_header()
     points = k2602_limits.imeas_hi_points
@@ -448,6 +454,7 @@ def main():
     global testmode
     testmode = args.t
 
+    global k26
     # a bit confusing where 'dmm' is a class with stuff like dmm.read_v(), 
     # but k26 is a pyvisa resource that has .write(), .read_ascii_values() etc
     if testmode:
