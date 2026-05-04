@@ -14,6 +14,10 @@ import sys
 import time
 import signal
 
+# XXX not sure what this was, csv / logger thing
+class b():
+    write = print
+
 '''
 Currently this scripts only works with following DMMs:
  * 3458a   = HP/Agilent/Keysight 3458A 8.5-digit DMM with GPIB
@@ -104,14 +108,14 @@ class dmm_xdevs():
     def init_inst_3458(self):
         # Setup HP 3458A
         self.inst.write ("PRESET NORM")
-        self.inst.write ("OFORMAT ASCII")
-        self.inst.write ("FUNC DCV,AUTO")
-        self.inst.write ("TARM HOLD")
-        self.inst.write ("TRIG LINE")
+#        self.inst.write ("OFORMAT ASCII")
+        self.inst.write ("DCV 10")
+#        self.inst.write ("TARM HOLD")
+        self.inst.write ("TRIG AUTO")
         self.inst.write ("NPLC %.3f" % dmm_nplc)
         self.inst.write ("AZERO ON")
-        self.inst.write ("NRDGS 1,AUTO")
-        self.inst.write ("MEM OFF")
+#        self.inst.write ("NRDGS 1,AUTO")
+        self.inst.write ("MATH OFF")
         self.inst.write ("END ALWAYS")
         self.inst.write ("NDIG 9")
         self.inst.write ("DELAY 0")
@@ -265,7 +269,7 @@ class dmm_xdevs():
     def get_data(self):
         global dmm_val
         if (dmm_type == "3458a"):
-            self.status_flag,data = self.read_data("TARM AUTO,1")
+            self.status_flag,data = self.read_data("TRIG SGL")
         else:
             self.status_flag,data = self.read_data("READ?")
         if (self.status_flag):
@@ -311,4 +315,40 @@ class dmm_xdevs():
 
     def get_data_status(self):
         return self.status_flag
+
+# super thin wrapper to match func names
+class dmm_wrapper(dmm_xdevs):
+    def __init__(self):
+        #        self.pyvis_res = pyvisa_res
+        #super().__init__(pyvisa_res, 'xdev_3458')
+        super().__init__(None, 'xdevs_3478')
+        ids = super().exec_idn()
+        super().init_inst_3458()
+        return
+
+# set whatever necessary to measure volts
+    def config_v(self):
+        super().set_dcv_range(40)
+        return
+
+# set whatever necessary to measure up to 1A
+    def config_i(self):
+        super().set_dci_range(3)
+        return
+
+# manual range
+    def range_v(self, expect):
+        super().set_dcv_range(expect)
+        return
+
+    def range_i(self, expect):
+        super().set_dci_range(expect)
+        return
+
+#get single reading
+    def read_v(self):
+        return super().get_data()
+
+    def read_i(self):
+        return super().get_data()
 
