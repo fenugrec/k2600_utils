@@ -26,6 +26,9 @@ from time import sleep
 from k26_common import *
 from magiconfig import magiconfig
 
+def logprint(*args, **kwargs):
+    logf.info(*args, **kwargs)
+
 def open_k26(resman):
     k26_res = resman.open_resource(cfg.dut.res)
     k26_res.baud_rate = cfg.dut.baud
@@ -82,7 +85,7 @@ def print_reading(setpoint, rdg):
     if s == 0: s = 1e-9
     e_ppm = (rdg.median / s - 1) * 1e6
     e_ppm = sorted((-999, e_ppm, 999))[1] #magic clamp to within +- 999ppm
-    print(f'{setpoint:.7g}\t{rdg.median:.7g}\t{e_ppm:.5g}\t{rdg.stdev:.7g}')
+    logprint(f'{setpoint:.7g}\t{rdg.median:.7g}\t{e_ppm:.5g}\t{rdg.stdev:.7g}')
 
 ######## sweep smu V and measure with DMM
 def sweep(k26, dmm, vrange, points):
