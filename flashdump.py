@@ -10,18 +10,18 @@
 # - if required, specify start / end addresses
 #
 # - in my very rushed tests with a 2602A, it seemed to take offense
-#  when I requested a read for the entire 32MB flash; it may be necessary to run
-# this multiple times, specifying 'start' and 'len' manually
+#  when I requested a read for the entire 32MB space; it may be necessary to run
+# this multiple times for multiple chunks, specifying 'start' and 'len' manually
 #
-# - my 2602 gives me an innocuous error 'query interrupted' but still shoots all data correctly.
-#  Not sure if that is due to the progress reporting method I use and pyvisa
+# - my 2602 gives me an innocuous error 'query interrupted' but still sends all data correctly.
+#  Not sure if that is due to the progress reporting method I use
 #
-# K2600 mem size : 4MB (0x400000)
+# K2600 mem size : 4MB (0x40 0000)
 # K2600A mem size : 32MB (0x200 0000)
 # K2600B mem size : ???
 
 ####################################
-# ###### configure here ########
+######### configure here ###########
 
 res = 'GPIB0::16::INSTR'
 #res = 'TCPIP::192.168.1.12::gpib0,16::INSTR'
