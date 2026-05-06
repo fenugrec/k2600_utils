@@ -13,7 +13,7 @@
 # - general config is held in external pv.conf to ideally avoid having to edit this script at all
 
 # TODO :
-# see cal_2600.py
+# see adj_k26.py
 
 import pyvisa
 import argparse
