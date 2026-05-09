@@ -14,6 +14,8 @@
 
 # TODO :
 # see adj_k26.py
+# - 24h limits
+# -
 
 import pyvisa
 import argparse
@@ -121,11 +123,11 @@ def step2_do_one(k26, dmm, chan, pvstep, sign):
         target = -pvstep.target
     logf.debug(f'\n\t step2 {target}')
     dmm.range_v(target)
-    k26_writelog(f'smu{chan}.source.levelv = {target}')
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
+    k26_writelog(f'smux.source.levelv = {target}')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.pv.step_dwell)
     dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_OFF')
     delta = dmm_rdg - target
     print_result(vrange, target, dmm_rdg, delta, pvstep.tol)
     k26_get_errors(k26)
@@ -138,15 +140,15 @@ def step2(k26, dmm, chan, point=None):
     logprint('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 2')
-    k26_writelog(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
-    k26_writelog(f'smu{chan}.sense = smu{chan}.SENSE_REMOTE')
+    k26_writelog(f'smux.source.func = smux.OUTPUT_DCVOLTS')
+    k26_writelog(f'smux.sense = smux.SENSE_REMOTE')
     dmm.config_v()
     print_result_header()
     points = k2602_limits.vsource_points
     if point in range(0, len(points)):
         points = [points[point]]
     for pvstep in points:
-        k26_writelog(f'smu{chan}.source.rangev = {pvstep.range}')
+        k26_writelog(f'smux.source.rangev = {pvstep.range}')
         step2_do_one(k26, dmm, chan, pvstep, 1)
         step2_do_one(k26, dmm, chan, pvstep, -1)
     return
@@ -162,20 +164,20 @@ def step3_do_one(k26, dmm, chan, pvstep, sign):
         target = -pvstep.target
     logf.debug(f'\n\t step3 {target}')
     dmm.range_v(target)
-    k26_writelog(f'smu{chan}.source.levelv = {target}')
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
+    k26_writelog(f'smux.source.levelv = {target}')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.pv.step_dwell)
     dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
     delta = dmm_rdg - target
     logf.info(f'V meas initial: range={vrange} tgt={target} rdg={dmm_rdg} delta={delta}')
 
     # adjust SMU once, should be 'close enough'
-    k26_writelog(f'smu{chan}.source.levelv = {target - delta}')
+    k26_writelog(f'smux.source.levelv = {target - delta}')
     sleep(cfg.pv.step_dwell)
     k26r = lambda: k26_read_v(k26, chan)
     smu_rdg = read_multi(k26r, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'smu').median
     dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_OFF')
     delta = dmm_rdg - smu_rdg
     logf.info(f'V meas final: range={vrange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
     print_result(vrange, target, smu_rdg, delta, pvstep.tol)
@@ -189,15 +191,15 @@ def step3(k26, dmm, chan, point=None):
     logprint('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 3')
-    k26_writelog(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCVOLTS')
-    k26_writelog(f'smu{chan}.sense = smu{chan}.SENSE_REMOTE')
+    k26_writelog(f'smux.source.func = smux.OUTPUT_DCVOLTS')
+    k26_writelog(f'smux.sense = smux.SENSE_REMOTE')
     dmm.config_v()
     print_result_header()
     points = k2602_limits.vmeas_points
     if point in range(0, len(points)):
         points = [points[point]]
     for pvstep in points:
-        k26_writelog(f'smu{chan}.source.rangev = {pvstep.range}')
+        k26_writelog(f'smux.source.rangev = {pvstep.range}')
         step3_do_one(k26, dmm, chan, pvstep, 1)
         step3_do_one(k26, dmm, chan, pvstep, -1)
     return
@@ -212,15 +214,15 @@ def step4_do_one(k26, dmm, chan, pvstep, sign):
         target = -pvstep.target
     logf.debug(f'\n\t step4 {target}')
     dmm.range_i(target)
-    k26_writelog(f'smu{chan}.source.leveli = {target}')
+    k26_writelog(f'smux.source.leveli = {target}')
     if pvstep.config_dwell:
         dwell = getattr(cfg.pv, pvstep.config_dwell)
     else:
         dwell = cfg.pv.step_dwell
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_ON')
     sleep(dwell)
     dmm_rdg = read_multi(dmm.read_i, cfg.pv.discard_i, cfg.pv.keep_i, logf.debug, 'dmm').median
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_OFF')
     delta = dmm_rdg - target
     print_result(irange, target, dmm_rdg, delta, pvstep.tol)
     k26_get_errors(k26)
@@ -233,17 +235,17 @@ def step4(k26, dmm, chan, point=None):
     logprint('*** DMM_HI -> H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 4')
-    k26_writelog(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
-    k26_writelog(f'smu{chan}.source.limitv = 10')
-    k26_writelog(f'smu{chan}.source.levelv = 0')
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
+    k26_writelog(f'smux.source.func = smux.OUTPUT_DCAMPS')
+    k26_writelog(f'smux.source.limitv = 10')
+    k26_writelog(f'smux.source.levelv = 0')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_ON')
     dmm.config_i()
     print_result_header()
     points = k2602_limits.isource_points
     if point in range(0, len(points)):
         points = [points[point]]
     for pvstep in points:
-        k26_writelog(f'smu{chan}.source.rangei = {pvstep.range}')
+        k26_writelog(f'smux.source.rangei = {pvstep.range}')
         step4_do_one(k26, dmm, chan, pvstep, 1)
         step4_do_one(k26, dmm, chan, pvstep, -1)
     return
@@ -259,27 +261,27 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
         target = -pvstep.target
     logf.debug(f'\n\t step5 {target}')
     dmm.range_i(target)
-    k26_writelog(f'smu{chan}.source.leveli = {target}')
+    k26_writelog(f'smux.source.leveli = {target}')
     if pvstep.config_dwell:
         dwell = getattr(cfg.pv, pvstep.config_dwell)
     else:
         dwell = cfg.pv.step_dwell
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_ON')
     # use configurable dwell only first time ?
     sleep(dwell)
     dmm_rdg = read_multi(dmm.read_i, cfg.pv.discard_i, cfg.pv.keep_i, logf.debug, 'dmm').median
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_OFF')
     delta = dmm_rdg - target
     logf.info(f'I meas initial: range={irange} tgt={target} rdg={dmm_rdg} delta={delta}')
 
     # adjust SMU once, should be 'close enough'
-    k26_writelog(f'smu{chan}.source.leveli = {target - delta}')
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
+    k26_writelog(f'smux.source.leveli = {target - delta}')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.pv.step_dwell)
     k26r = lambda: k26_read_i(k26, chan)
     smu_rdg = read_multi(k26r, cfg.pv.discard_i, cfg.pv.keep_i, logf.debug, 'smu').median
     dmm_rdg = read_multi(dmm.read_i, cfg.pv.discard_i, cfg.pv.keep_i, logf.debug, 'dmm').median
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_OFF')
     delta = dmm_rdg - smu_rdg
     logf.info(f'I meas final: range={irange} dmm={dmm_rdg} smu={smu_rdg} delta={delta}')
     print_result(irange, target, smu_rdg, delta, pvstep.tol)
@@ -293,15 +295,15 @@ def step5(k26, dmm, chan, point=None):
     logprint('*** DMM_HI -> SH, and DMM_HI -> H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 5')
-    k26_writelog(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
-    k26_writelog(f'smu{chan}.source.limitv = 10')
+    k26_writelog(f'smux.source.func = smux.OUTPUT_DCAMPS')
+    k26_writelog(f'smux.source.limitv = 10')
     dmm.config_i()
     print_result_header()
     points = k2602_limits.imeas_points
     if point in range(0, len(points)):
         points = [points[point]]
     for pvstep in points:
-        k26_writelog(f'smu{chan}.source.rangev = {pvstep.range}')
+        k26_writelog(f'smux.source.rangev = {pvstep.range}')
         step5_do_one(k26, dmm, chan, pvstep, 1)
         step5_do_one(k26, dmm, chan, pvstep, -1)
     return
@@ -316,11 +318,11 @@ def step6_do_one(k26, dmm, chan, pvstep, sign):
         target = -pvstep.target
     logf.debug(f'\n\t step6 {target}')
     dmm.range_v(target * cfg.pv.r5_actual)
-    k26_writelog(f'smu{chan}.source.leveli = {target}')
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
+    k26_writelog(f'smux.source.leveli = {target}')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
     dmm_rdg = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_OFF')
     logprint("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
     dmm_rdg = dmm_raw / cfg.pv.r5_actual
@@ -338,15 +340,15 @@ def step6(k26, dmm, chan, point=None):
     logprint('*** SMU_H -> 0R5 H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 6')
-    k26_writelog(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
-    k26_writelog(f'smu{chan}.source.limitv = 10')
+    k26_writelog(f'smux.source.func = smux.OUTPUT_DCAMPS')
+    k26_writelog(f'smux.source.limitv = 10')
     dmm.config_v()
     print_result_header()
     points = k2602_limits.isource_hi_points
     if point in range(0, len(points)):
         points = [points[point]]
     for pvstep in points:
-        k26_writelog(f'smu{chan}.source.rangei = {pvstep.range}')
+        k26_writelog(f'smux.source.rangei = {pvstep.range}')
         step6_do_one(k26, dmm, chan, pvstep, 1)
         step6_do_one(k26, dmm, chan, pvstep, -1)
     return
@@ -362,24 +364,24 @@ def step7_do_one(k26, dmm, chan, pvstep, sign):
         target = -pvstep.target
     logf.debug(f'\n\t step7 {target}')
     dmm.range_v(target * cfg.pv.r5_actual)
-    k26_writelog(f'smu{chan}.source.leveli = {target}')
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
+    k26_writelog(f'smux.source.leveli = {target}')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
     dmm_raw = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_OFF')
     logprint("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
     dmm_rdg = dmm_raw / cfg.pv.r5_actual
     delta = dmm_rdg - target
     logf.info(f'I meas initial: range={irange} tgt={target} vsense={dmm_raw} i_calc={dmm_rdg} delta={delta}')
     # adjust SMU once, should be 'close enough'
-    k26_writelog(f'smu{chan}.source.leveli = {target - delta}')
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_ON')
+    k26_writelog(f'smux.source.leveli = {target - delta}')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.pv.ipulse_ton)
     dmm_raw = read_multi(dmm.read_v, cfg.pv.discard_v, cfg.pv.keep_v, logf.debug, 'dmm').median
     k26r = lambda: k26_read_i(k26, chan)
     smu_rdg = read_multi(k26r, cfg.pv.discard_i, cfg.pv.keep_i, logf.debug, 'smu').median
-    k26_writelog(f'smu{chan}.source.output = smu{chan}.OUTPUT_OFF')
+    k26_writelog(f'smux.source.output = smux.OUTPUT_OFF')
     logprint("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
     dmm_rdg = dmm_raw / cfg.pv.r5_actual
@@ -398,15 +400,15 @@ def step7(k26, dmm, chan, point=None):
     logprint('*** SMU_H -> 0R5 H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 7')
-    k26_writelog(f'smu{chan}.source.func = smu{chan}.OUTPUT_DCAMPS')
-    k26_writelog(f'smu{chan}.source.limitv = 10')
+    k26_writelog(f'smux.source.func = smux.OUTPUT_DCAMPS')
+    k26_writelog(f'smux.source.limitv = 10')
     dmm.config_v()
     print_result_header()
     points = k2602_limits.imeas_hi_points
     if point in range(0, len(points)):
         points = [points[point]]
     for pvstep in points:
-        k26_writelog(f'smu{chan}.source.rangev = {pvstep.range}')
+        k26_writelog(f'smux.source.rangev = {pvstep.range}')
         step7_do_one(k26, dmm, chan, pvstep, 1)
         step7_do_one(k26, dmm, chan, pvstep, -1)
     return
@@ -479,12 +481,14 @@ def main():
     k26_rev = k26.query('print(localnode.revision)')
     uptime = round(k26.query_ascii_values('print(os.clock())')[0]/60)
     logf.info(f'connected to model {k26_model}, sn # {k26_sn}, rev {k26_rev}; uptime {uptime} min.')
+    k26.write(f'smux = smu{chan}')  #convenient alias
+
     if uptime < (2 * 60):
         logprint('******* WARNING **********')
         logprint(f'******* uptime ({uptime} minutes) below minimum recommended 2h **********')
     # should be ~ equivalent to Menu->Save Setup->Recall->Factory
     k26_writelog('reset()')
-    k26_writelog(f'smu{args.chan}.reset()')
+    k26_writelog(f'smux.reset()')
     chan_u=args.chan.capitalize()
     k26_writelog(f'display.screen = display.SMU{chan_u}')
 
