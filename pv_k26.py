@@ -94,7 +94,7 @@ class k2602_limits():
             pvstep(1e-3, 900e-6, 470e-9),
             pvstep(10e-3, 9e-3, 5.7e-6),
             pvstep(100e-3, 90e-3, 47e-6, config_dwell='dly_100mA'),
-            pvstep(1, 900e-3, 1.35e-6, config_dwell='dly_1A'),
+            pvstep(1, 900e-3, 1.35e-3, config_dwell='dly_1A'),
             ]
     isource_hi_points = [
             pvstep(3, 2.4, 2.94e-3),
