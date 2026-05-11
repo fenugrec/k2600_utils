@@ -18,6 +18,8 @@
 # - general config is held in external cal.conf to ideally avoid having to edit this script at all
 
 # TODO :
+# -debug mode with alt settings for dwell, etc in .conf
+# -sanity check wiring at start of each step (i.e. set 1V read 1V +- 10% etc)
 # -unify config naming of ipulse_ton etc vs config_dwell
 
 import pyvisa

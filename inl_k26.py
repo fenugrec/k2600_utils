@@ -12,6 +12,7 @@
 # - general config is held in external .conf to ideally avoid having to edit this script at all
 
 # TODO :
+# - interlace reads for multiple dmm ?
 # - better output format
 # - log + print
 
