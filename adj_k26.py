@@ -346,6 +346,8 @@ def main():
     k26_model = k26.query('print(localnode.model)')
     k26_sn = k26.query('print(localnode.serialno)')
     k26_rev = k26.query('print(localnode.revision)')
+    print('\nClearing any pending errors :')
+    k26_get_errors(k26)
     uptime = round(k26.query_ascii_values('print(os.clock())')[0]/60)
     logf.info(f'connected to model {k26_model}, sn # {k26_sn}, rev {k26_rev}; uptime {uptime} min.')
     if uptime < (2 * 60):
