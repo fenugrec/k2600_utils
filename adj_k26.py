@@ -197,7 +197,7 @@ def step3(k26, dmm, chan, point=None):
     k26.write(f'smux.cal.polarity = smux.CAL_AUTO')
     return
 
-# almost identical to step3. SMU pulse mode could be difficult to use while
+# similar to step3 but uses external shunt ! SMU pulse mode could be difficult to use while
 # synchronizing to external DMM...
 def step4_do_one(k26, dmm, chan, calstep, sign):
     if sign > 0:
@@ -209,7 +209,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
         zval = -calstep.zval
         setpoint = -calstep.setpoint
     logf.info(f'\n\t step4 {setpoint}')
-    dmm.range_i(setpoint)
+    dmm.range_v(setpoint * cfg.cal.r5_actual)
     k26.write(f'smux.source.leveli = {zval}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
@@ -242,6 +242,8 @@ def step4(k26, dmm, chan, point=None):
     print('*** SMU_H -> 0R5 H')
     input("-------- press Enter when ready ---------")
     dmm.config_v()
+    k26.write(f'smux.source.func = smux.OUTPUT_DCAMPS')
+    k26_write(f'smux.source.limitv = 6')
     points = k2602_points.icalsteps_hi
     if point in range(0, len(points)):
         points = [points[point]]

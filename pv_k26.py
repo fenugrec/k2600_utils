@@ -325,7 +325,7 @@ def step6_do_one(k26, dmm, chan, pvstep, sign):
     k26_writelog(f'smux.source.output = smux.OUTPUT_OFF')
     logprint("post pulse cooldown...")
     sleep(cfg.pv.ipulse_toff)
-    dmm_rdg = dmm_raw / cfg.pv.r5_actual
+    dmm_rdg = dmm_rdg / cfg.pv.r5_actual
     delta = dmm_rdg - target
     print_result(irange, target, dmm_rdg, delta, pvstep.tol)
     k26_get_errors(k26)
@@ -341,7 +341,7 @@ def step6(k26, dmm, chan, point=None):
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 6')
     k26_writelog(f'smux.source.func = smux.OUTPUT_DCAMPS')
-    k26_writelog(f'smux.source.limitv = 10')
+    k26_writelog(f'smux.source.limitv = 6')
     dmm.config_v()
     print_result_header()
     points = k2602_limits.isource_hi_points
@@ -401,7 +401,7 @@ def step7(k26, dmm, chan, point=None):
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 7')
     k26_writelog(f'smux.source.func = smux.OUTPUT_DCAMPS')
-    k26_writelog(f'smux.source.limitv = 10')
+    k26_writelog(f'smux.source.limitv = 6')
     dmm.config_v()
     print_result_header()
     points = k2602_limits.imeas_hi_points
