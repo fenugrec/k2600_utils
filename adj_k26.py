@@ -178,7 +178,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
 def step3(k26, dmm, chan, point=None):
     print('\n******** STEP 3 (current <= 1A) . Verify connections:')
     print('*** DMM_LO -> L')
-    print('*** DMM_HI -> H')
+    print('*** DMM_AMPS -> H')
     input("-------- press Enter when ready ---------")
     k26.write(f'smux.source.func = smux.OUTPUT_DCAMPS')
     dmm.config_i()

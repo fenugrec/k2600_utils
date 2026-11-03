@@ -232,7 +232,7 @@ def step4_do_one(k26, dmm, chan, pvstep, sign):
 def step4(k26, dmm, chan, point=None):
     logprint('\n******** STEP 4 (I source <= 1A). Verify connections:')
     logprint('*** DMM_LO -> L')
-    logprint('*** DMM_HI -> H')
+    logprint('*** DMM_AMPS -> H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 4')
     k26_writelog(f'smux.source.func = smux.OUTPUT_DCAMPS')
@@ -291,8 +291,8 @@ def step5_do_one(k26, dmm, chan, pvstep, sign):
 #step5 : low I meas accu test; p. 15-14
 def step5(k26, dmm, chan, point=None):
     logprint('\n******** STEP 5 (I meas <= 1A) . Verify connections:')
-    logprint('*** DMM_LO -> SL, and DMM_LO -> L')
-    logprint('*** DMM_HI -> SH, and DMM_HI -> H')
+    logprint('*** DMM_LO -> L')
+    logprint('*** DMM_AMPS -> H')
     input("-------- press Enter when ready ---------")
     logf.debug('\n STEP 5')
     k26_writelog(f'smux.source.func = smux.OUTPUT_DCAMPS')
