@@ -280,12 +280,27 @@ def step6(k26, dmm, chan, point=None):
 
 # gather calsteps together, except step6 that is meaningless on its own
 calsteps = [None, None, step2, step3, step4, step5]
+calsteps_descr = [None,
+#                  '1: init/prep (mandatory)', #not sure how to convey that it can neither be skipped or run on its own
+                  None,
+                  '2: Voltage',
+                  '3: I(low)',
+                  '4: I(high)',
+                  '5: Contact resistance',
+#                  '6: save cal', #same, can't run just this one
+                  ]
+calsteps_helpstring = 'List of steps:'
+for i in calsteps_descr:
+    if i:
+        calsteps_helpstring += (f'\n\t{i}')
+
 
 def main():
-    parser = argparse.ArgumentParser(description="K 2600 calibration script")
+    parser = argparse.ArgumentParser(description="####### K 2600 adjustment (calibration) #######",
+                                     formatter_class=argparse.RawDescriptionHelpFormatter, epilog= calsteps_helpstring)
     parser.add_argument('-c', '--cfg', type=argparse.FileType('r'), required=True, help='config file')
     parser.add_argument('-x', '--chan', required=True, help='select channel [a|b]')
-    parser.add_argument('-s', '--step', type=int, help='run only step # [2..5]')
+    parser.add_argument('-s', '--step', type=int, help='run specific step (see list below)')
     parser.add_argument('-p', '--point', type=int, help='run only one cal point (use with -s)')
     parser.add_argument('-n', action='store_true', help='dry run, will not save cal')
     parser.add_argument('-t', action='store_true', help='test mode (dev)')
