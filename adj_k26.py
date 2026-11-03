@@ -235,7 +235,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     return
 
 def step4(k26, dmm, chan, point=None):
-    print('\n******** STEP 3B (current > 1A) . Verify connections (fig 16-3):')
+    print('\n******** STEP 4 (current > 1A) . Verify connections (fig 16-3):')
     print('*** DMM_LO -> 0R5 sense_L')
     print('*** DMM_HI -> 0R5 sense_H')
     print('*** SMU_L -> 0R5 L')
@@ -260,12 +260,12 @@ def step4(k26, dmm, chan, point=None):
     return
 
 def step5(k26, dmm, chan, point=None):
-    print('\n******** STEP 4 (contact 0) . Verify connections (fig 16-4):')
+    print('\n******** STEP 5 (contact 0R) . Verify connections (fig 16-4):')
     print('*** no DMM; short L -> SL, and H -> SH')
     input("-------- press Enter when ready ---------")
     sleep(cfg.cal.step_dwell)
     k26.write('r0_hi, r0_lo = smux.contact.r()')
-    print('\n******** STEP 4 (contact 50R) . Verify connections (fig 16-5):')
+    print('\n******** STEP 5B (contact 50R) . Verify connections (fig 16-5):')
     print('*** no DMM; L -> 50R_l -> SL, and H -> 50R_h -> SH')
     input("-------- press Enter when ready ---------")
     sleep(cfg.cal.step_dwell)
