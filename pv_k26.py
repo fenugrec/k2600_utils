@@ -432,6 +432,7 @@ def main():
     if (args.chan != 'a') and (args.chan != 'b'):
         logprint("bad channel, must be a or b")
         exit()
+    chan = args.chan
 
     point = args.point
     if (point and not args.step):
@@ -471,7 +472,7 @@ def main():
         logf.setLevel(logging.INFO)
 
     ## start cal process
-    logf.info(f'start PV on {dt.datetime.now().isoformat()}, SMU chan {args.chan}')
+    logf.info(f'start PV on {dt.datetime.now().isoformat()}, SMU chan {chan}')
     logf.info(f'Using following parameters for PV:')
     cfg.print_configtree(logf)
 
@@ -489,7 +490,7 @@ def main():
     # should be ~ equivalent to Menu->Save Setup->Recall->Factory
     k26_writelog('reset()')
     k26_writelog(f'smux.reset()')
-    chan_u=args.chan.capitalize()
+    chan_u=chan.capitalize()
     k26_writelog(f'display.screen = display.SMU{chan_u}')
 
     if args.step in range(2, 8):
@@ -499,7 +500,7 @@ def main():
         steps = range(2,8)
 
     for s in steps:
-        calsteps[s](k26, dmm, args.chan, point)
+        calsteps[s](k26, dmm, chan, point)
 
     logf.info(f'\n*********** DONE *********')
     k26_writelog('display.screen = display.SMUA_SMUB')
