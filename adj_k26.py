@@ -15,7 +15,7 @@
 #   and the numbering of steps no longer matches the refman.
 # - A bit of confusion between 'steps' i.e. ref manual steps, and individual test points per range
 # - main() near the end initializes stuff and includes step1
-# - general config is held in external cal.conf to ideally avoid having to edit this script at all
+# - general config is held in external adj.conf to ideally avoid having to edit this script at all
 
 # TODO :
 # -debug mode with alt settings for dwell, etc in .conf
