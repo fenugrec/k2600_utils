@@ -394,10 +394,12 @@ def main():
     k26.write(f'smux.cal.unlock("KI0026XX")')
 
     if args.r:
-        k26.write(f'smu{chan}.cal.restore()')
-        # " with no args : restores smuX.CALSET_DEFAULT The normal calibration set.
-        k26.write('smux.reset()')
-        k26.write('abort') #GTL
+        ans = input("-------- Restore cal to defaults? y/Y to confirm, anything else cancels: ")
+        if ans == 'y' or ans == 'Y':
+            k26.write(f'smu{chan}.cal.restore()')
+            # " with no args : restores smuX.CALSET_DEFAULT The normal calibration set.
+            k26.write('smux.reset()')
+            k26.write('abort') #GTL
         return
 
     k26.write(f'smux.reset()')
