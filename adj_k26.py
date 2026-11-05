@@ -91,7 +91,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
         zval = -calstep.zval
         setpoint = -calstep.setpoint
     logf.info(f'\n\t step2 {setpoint}')
-    dmm.range_v(setpoint)
+    dmm.range_v(setpoint / 100) # range down two decades to capture zero point
     k26.write(f'smux.source.levelv = {zval}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.cal.step_dwell)
@@ -100,6 +100,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     smu_z = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'smu').median
     dmm_z = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
+    dmm.range_v(setpoint)
     k26.write(f'smux.source.levelv = {setpoint}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.cal.step_dwell)
@@ -147,7 +148,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
         zval = -calstep.zval
         setpoint = -calstep.setpoint
     logf.info(f'\n\t step3 {setpoint}')
-    dmm.range_i(setpoint)
+    dmm.range_i(setpoint / 100) # range down two decades to capture zero point
     k26.write(f'smux.source.leveli = {zval}')
     if calstep.config_dwell:
         dwell = getattr(cfg.cal, calstep.config_dwell)
@@ -160,6 +161,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     smu_z = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
     dmm_z = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
+    dmm.range_i(setpoint)
     k26.write(f'smux.source.leveli = {setpoint}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
     sleep(dwell)
@@ -208,7 +210,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
         zval = -calstep.zval
         setpoint = -calstep.setpoint
     logf.info(f'\n\t step4 {setpoint}')
-    dmm.range_v(setpoint * cfg.cal.r5_actual)
+    dmm.range_v(setpoint * cfg.cal.r5_actual / 100) # range down two decades to capture zero point
     k26.write(f'smux.source.leveli = {zval}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
@@ -216,6 +218,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     smu_z = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
     dmm_z_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
+    dmm.range_v(setpoint * cfg.cal.r5_actual)
     k26.write(f'smux.source.leveli = {setpoint}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.cal.ipulse_ton)
