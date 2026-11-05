@@ -374,6 +374,7 @@ def main():
     k26.write(f'smux = smu{chan}')  #convenient alias
     k26.write(f'smux.cal.unlock("KI0026XX")')
     k26.write(f'smux.reset()')
+    k26.write(f'display.screen = display.SMU{chan.upper()}')
 
     if args.step in range(2, 6):
         steps = [args.step]
