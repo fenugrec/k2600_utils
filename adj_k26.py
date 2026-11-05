@@ -108,7 +108,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     dmm_fs = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
     logf.info(f'V cal step : range={vrange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
-    k26.write(f'smux.source.calibratev({vrange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
+    k26.write(f'smux.source.calibratev({vrange}, {zval}, {dmm_z}, {setpoint}, {dmm_fs})')
     if not calstep.sourceonly:
         k26.write(f'smux.measure.calibratev({vrange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
     k26_get_errors(k26)
@@ -169,7 +169,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     dmm_fs = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
     logf.info(f'I cal step : range={irange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
-    k26.write(f'smux.source.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
+    k26.write(f'smux.source.calibratei({irange}, {zval}, {dmm_z}, {setpoint}, {dmm_fs})')
     if not calstep.sourceonly:
         k26.write(f'smux.measure.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
     k26_get_errors(k26)
@@ -230,7 +230,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     dmm_z = dmm_z_raw / cfg.cal.r5_actual
     dmm_fs = dmm_fs_raw / cfg.cal.r5_actual
     logf.info(f'I cal step (dmm raw zero={dmm_z_raw}, fs={dmm_fs_raw}): ' + calcmd)
-    k26.write(f'smux.source.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
+    k26.write(f'smux.source.calibratei({irange}, {zval}, {dmm_z}, {setpoint}, {dmm_fs})')
     k26.write(f'smux.measure.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
     k26_get_errors(k26)
     return
