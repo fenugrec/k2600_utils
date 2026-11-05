@@ -319,9 +319,10 @@ def main():
     parser.add_argument('-s', '--step', type=int, help='run specific step (see list below)')
     parser.add_argument('-p', '--point', type=int, help='run only one cal point (use with -s)')
     parser.add_argument('-n', action='store_true', help='dry run, will not save cal')
-    parser.add_argument('-t', action='store_true', help='test mode (dev)')
     parser.add_argument('-r', action='store_true', help='restore SMU cal state to default')
-    parser.add_argument('-l', '--log', default='cal_tmp.log', help='output log file')
+    parser.add_argument('-t', action='store_true', help='test mode (dev)')
+    parser.add_argument('-v', action='store_true', help='verbose')
+    parser.add_argument('-l', '--log', default='adj_tmp.log', help='output log file')
     args = parser.parse_args(sys.argv[1:])
 
     global cfg
@@ -366,6 +367,9 @@ def main():
         dmm_res = rm.open_resource(cfg.dmm.res)
         dmm = dmm_3478(dmm_res)
         logf.setLevel(logging.INFO)
+
+    if args.v:
+        logf.setLevel(logging.DEBUG)
 
     ## start cal process
     logf.info(f'start cal on {dt.datetime.now().isoformat()}, SMU chan {chan}')
