@@ -306,6 +306,7 @@ def main():
     parser.add_argument('-p', '--point', type=int, help='run only one cal point (use with -s)')
     parser.add_argument('-n', action='store_true', help='dry run, will not save cal')
     parser.add_argument('-t', action='store_true', help='test mode (dev)')
+    parser.add_argument('-r', action='store_true', help='restore SMU cal state to default')
     parser.add_argument('-l', '--log', default='cal_tmp.log', help='output log file')
     args = parser.parse_args(sys.argv[1:])
 
@@ -373,6 +374,14 @@ def main():
 
     k26.write(f'smux = smu{chan}')  #convenient alias
     k26.write(f'smux.cal.unlock("KI0026XX")')
+
+    if args.r:
+        k26.write(f'smu{chan}.cal.restore()')
+        # " with no args : restores smuX.CALSET_DEFAULT The normal calibration set.
+        k26.write('smux.reset()')
+        k26.write('abort') #GTL
+        return
+
     k26.write(f'smux.reset()')
     k26.write(f'display.screen = display.SMU{chan.upper()}')
 
