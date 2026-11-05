@@ -386,7 +386,9 @@ def main():
         calsteps[s](k26, dmm, chan, point)
         k26_get_errors(k26)
 
-    if not dryrun:
+    if dryrun:
+        print('\n******** STEP 6 - skipped (dry run); not saving cal ********')
+    else:
         print('\n******** STEP 6')
         ans = input("-------- Save to EEPROM? y/Y to confirm, anything else cancels: ")
         if ans == 'y' or ans == 'Y':
