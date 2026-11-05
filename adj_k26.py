@@ -100,16 +100,22 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smux.source.levelv = {zval}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.cal.step_dwell)
-# TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
+# docs not super clear, but in SENSE_CALA we should: - not smu.measure.v() , and not call smux.measure.calibratev()
     k26r = lambda: k26_read_v(k26, chan)
-    smu_z = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'smu').median
+    if calstep.sourceonly:
+        smu_z = 0
+    else:
+        smu_z = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'smu').median
     dmm_z = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
     dmm.range_v(setpoint)
     k26.write(f'smux.source.levelv = {setpoint}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
     sleep(cfg.cal.step_dwell)
-    smu_fs = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'smu').median
+    if calstep.sourceonly:
+        smu_fs = setpoint
+    else:
+        smu_fs = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'smu').median
     dmm_fs = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
     logf.info(f'V cal step : range={vrange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
