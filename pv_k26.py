@@ -33,7 +33,7 @@ def logprint(*args, **kwargs):
     logf.info(*args, **kwargs)
 
 # XXX k26 command wrapper just for debug; combine as class wrapper ?
-# ah but pyvisa also does that for us if loglevel=DEBUG
+# ah but pyvisa also does that for us if loglevel=DEBUG, but extremely verbosely
 def k26_writelog(s):
 #    logf.debug(f'k26 write "{s}"')
     k26.write(s)
@@ -501,7 +501,7 @@ def main():
     k26_get_errors(k26)
     uptime = round(k26.query_ascii_values('print(os.clock())')[0]/60)
     logf.info(f'connected to model {k26_model}, sn # {k26_sn}, rev {k26_rev}; uptime {uptime} min.')
-    k26.write(f'smux = smu{chan}')  #convenient alias
+    k26.writelog(f'smux = smu{chan}')  #convenient alias
 
     if uptime < (2 * 60):
         logprint('******* WARNING **********')

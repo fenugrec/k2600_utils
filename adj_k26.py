@@ -32,13 +32,18 @@ from time import sleep
 from k26_common import *
 from magiconfig import magiconfig
 
+#XXX print wrapper, todo move to common code
+#tee to both stdout and logfile for everything
+def logprint(*args, **kwargs):
+    logf.info(*args, **kwargs)
+
 def open_k26(resman):
     k26_res = resman.open_resource(cfg.dut.res)
     k26_res.baud_rate = cfg.dut.baud
     k26_res.flow_control = pyvisa.constants.ControlFlow[cfg.dut.flow]
     idstring = k26_res.query('*idn?')
     if '2602' not in idstring:
-        print("ID query mismatch")
+        logprint("ID query mismatch")
         quit()
     return k26_res
 
@@ -115,9 +120,9 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     return
 
 def step2(k26, dmm, chan, point=None):
-    print('\n******** STEP 2 (voltage) . Verify connections:')
-    print('*** DMM_LO -> SL, and DMM_LO -> L')
-    print('*** DMM_HI -> SH, and DMM_HI -> H')
+    logprint('\n******** STEP 2 (voltage) . Verify connections:')
+    logprint('*** DMM_LO -> SL, and DMM_LO -> L')
+    logprint('*** DMM_HI -> SH, and DMM_HI -> H')
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
     input("-------- press Enter when ready ---------")
     k26.write(f'smux.source.func = smux.OUTPUT_DCVOLTS')
@@ -126,14 +131,14 @@ def step2(k26, dmm, chan, point=None):
     if point in range(0, len(points)):
         points = [points[point]]
     for calpoint in points:
-        print(f'V cal point: {calpoint}')
+        logprint(f'V cal point: {calpoint}')
         k26.write(f'smux.source.rangev = {calpoint.range}')
         k26.write(f'smux.sense = smux.{calpoint.sensemode}')
         k26.write(f'smux.cal.polarity = smux.CAL_POSITIVE')
         step2_do_one(k26, dmm, chan, calpoint, 1)
         k26.write(f'smux.cal.polarity = smux.CAL_NEGATIVE')
         step2_do_one(k26, dmm, chan, calpoint, -1)
-    print('***** step 2 (voltage ranges) done ****')
+    logprint('***** step 2 (voltage ranges) done ****')
     k26.write(f'smux.cal.polarity = smux.CAL_AUTO')
     return
 
@@ -176,9 +181,9 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     return
 
 def step3(k26, dmm, chan, point=None):
-    print('\n******** STEP 3 (current <= 1A) . Verify connections:')
-    print('*** DMM_LO -> L')
-    print('*** DMM_AMPS -> H')
+    logprint('\n******** STEP 3 (current <= 1A) . Verify connections:')
+    logprint('*** DMM_LO -> L')
+    logprint('*** DMM_AMPS -> H')
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
     input("-------- press Enter when ready ---------")
     k26.write(f'smux.source.func = smux.OUTPUT_DCAMPS')
@@ -187,14 +192,14 @@ def step3(k26, dmm, chan, point=None):
     if point in range(0, len(points)):
         points = [points[point]]
     for calpoint in points:
-        print(f'I cal point: {calpoint}')
+        logprint(f'I cal point: {calpoint}')
         k26.write(f'smux.source.rangei = {calpoint.range}')
         k26.write(f'smux.sense = smux.{calpoint.sensemode}')
         k26.write(f'smux.cal.polarity = smux.CAL_POSITIVE')
         step3_do_one(k26, dmm, chan, calpoint, 1)
         k26.write(f'smux.cal.polarity = smux.CAL_NEGATIVE')
         step3_do_one(k26, dmm, chan, calpoint, -1)
-    print('***** step 3 (low current ranges) done ****')
+    logprint('***** step 3 (low current ranges) done ****')
     k26.write(f'smux.cal.polarity = smux.CAL_AUTO')
     return
 
@@ -225,7 +230,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
     dmm_fs_raw = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
-    print("post pulse cooldown...")
+    logprint("post pulse cooldown...")
     sleep(cfg.cal.ipulse_toff)
     dmm_z = dmm_z_raw / cfg.cal.r5_actual
     dmm_fs = dmm_fs_raw / cfg.cal.r5_actual
@@ -236,11 +241,11 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     return
 
 def step4(k26, dmm, chan, point=None):
-    print('\n******** STEP 4 (current > 1A) . Verify connections (fig 16-3):')
-    print('*** DMM_LO -> 0R5 sense_L')
-    print('*** DMM_HI -> 0R5 sense_H')
-    print('*** SMU_L -> 0R5 L')
-    print('*** SMU_H -> 0R5 H')
+    logprint('\n******** STEP 4 (current > 1A) . Verify connections (fig 16-3):')
+    logprint('*** DMM_LO -> 0R5 sense_L')
+    logprint('*** DMM_HI -> 0R5 sense_H')
+    logprint('*** SMU_L -> 0R5 L')
+    logprint('*** SMU_H -> 0R5 H')
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
     input("-------- press Enter when ready ---------")
     dmm.config_v()
@@ -250,26 +255,26 @@ def step4(k26, dmm, chan, point=None):
     if point in range(0, len(points)):
         points = [points[point]]
     for calpoint in points:
-        print(f'I cal point: {calpoint}')
+        logprint(f'I cal point: {calpoint}')
         k26.write(f'smux.source.rangei = {calpoint.range}')
         k26.write(f'smux.sense = smux.{calpoint.sensemode}')
         k26.write(f'smux.cal.polarity = smux.CAL_POSITIVE')
         step4_do_one(k26, dmm, chan, calpoint, 1)
         k26.write(f'smux.cal.polarity = smux.CAL_NEGATIVE')
         step4_do_one(k26, dmm, chan, calpoint, -1)
-    print('***** step 3 (hi current ranges) done ****')
+    logprint('***** step 3 (hi current ranges) done ****')
     k26.write(f'smux.cal.polarity = smux.CAL_AUTO')
     return
 
 def step5(k26, dmm, chan, point=None):
-    print('\n******** STEP 5 (contact 0R) . Verify connections (fig 16-4):')
-    print('*** no DMM; short L -> SL, and H -> SH')
+    logprint('\n******** STEP 5 (contact 0R) . Verify connections (fig 16-4):')
+    logprint('*** no DMM; short L -> SL, and H -> SH')
     input("-------- press Enter when ready ---------")
     sleep(cfg.cal.step_dwell)
     k26.write('r0_hi, r0_lo = smux.contact.r()')
-    print('\n******** STEP 5B (contact 50R) . Verify connections (fig 16-5):')
-    print('*** L -> 50R_l -> SL')
-    print('*** H -> 50R_h -> SH')
+    logprint('\n******** STEP 5B (contact 50R) . Verify connections (fig 16-5):')
+    logprint('*** L -> 50R_l -> SL')
+    logprint('*** H -> 50R_h -> SH')
     input("-------- press Enter when ready ---------")
     sleep(cfg.cal.step_dwell)
     k26.write('r50_hi, r50_lo = smux.contact.r()')
@@ -318,12 +323,12 @@ def main():
 
     chan = args.chan
     if (chan != 'a') and (chan != 'b'):
-        print("bad channel, must be a or b")
+        logprint("bad channel, must be a or b")
         exit()
 
     point = args.point
     if (point and not args.step):
-        print('cannot specify single point without step !')
+        logprint('cannot specify single point without step !')
         exit()
 
     ## setup logging, test/debug options
@@ -363,17 +368,17 @@ def main():
 
     if dryrun:
         logf.info('***************** dry run ! will not save cal ! ****************** ')
-    print('\n******** STEP 1 (prep)')
+    logprint('\n******** STEP 1 (prep)')
     k26_model = k26.query('print(localnode.model)')
     k26_sn = k26.query('print(localnode.serialno)')
     k26_rev = k26.query('print(localnode.revision)')
-    print('\nClearing any pending errors :')
+    logprint('\nClearing any pending errors :')
     k26_get_errors(k26)
     uptime = round(k26.query_ascii_values('print(os.clock())')[0]/60)
     logf.info(f'connected to model {k26_model}, sn # {k26_sn}, rev {k26_rev}; uptime {uptime} min.')
     if uptime < (2 * 60):
-        print('******* WARNING **********')
-        print(f'******* uptime ({uptime} minutes) below minimum recommended 2h **********')
+        logprint('******* WARNING **********')
+        logprint(f'******* uptime ({uptime} minutes) below minimum recommended 2h **********')
 
     k26.write(f'smux = smu{chan}')  #convenient alias
     k26.write(f'smux.cal.unlock("KI0026XX")')
@@ -390,7 +395,7 @@ def main():
 
     if args.step in range(2, 6):
         steps = [args.step]
-        print(f'Running only step {steps}')
+        logprint(f'Running only step {steps}')
     else:
         steps = range(2,6)
 
@@ -399,9 +404,9 @@ def main():
         k26_get_errors(k26)
 
     if dryrun:
-        print('\n******** STEP 6 - skipped (dry run); not saving cal ********')
+        logprint('\n******** STEP 6 - skipped (dry run); not saving cal ********')
     else:
-        print('\n******** STEP 6')
+        logprint('\n******** STEP 6')
         ans = input("-------- Save to EEPROM? y/Y to confirm, anything else cancels: ")
         if ans == 'y' or ans == 'Y':
             step6(k26, chan)
