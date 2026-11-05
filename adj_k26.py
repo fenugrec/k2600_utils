@@ -162,8 +162,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
     k26.write(f'smux.source.leveli = {setpoint}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
-# use default dwell here since we presumably settled everything already?
-    sleep(cfg.cal.step_dwell)
+    sleep(dwell)
     k26r = lambda: k26_read_i(k26, chan)
     smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
     dmm_fs = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'dmm').median
