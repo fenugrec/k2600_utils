@@ -345,12 +345,12 @@ def main():
 
     chan = args.chan
     if (chan != 'a') and (chan != 'b'):
-        logprint("bad channel, must be a or b")
+        print("bad channel, must be a or b")
         exit()
 
     point = args.point
     if (point and not args.step):
-        logprint('cannot specify single point without step !')
+        print('cannot specify single point without step !')
         exit()
 
     ## setup logging, test/debug options
