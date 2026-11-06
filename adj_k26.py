@@ -171,23 +171,30 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
         dwell = cfg.cal.step_dwell
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
     sleep(dwell)
-# TODO : not clear what can / needs to be skipped on CALA steps, docs unclear
+# docs not super clear, but in SENSE_CALA we should: - not smu.measure.v() , and not call smux.measure.calibratev()
     k26r = lambda: k26_read_i(k26, chan)
-    smu_z = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
+    if calstep.sourceonly:
+        smu_z = 0
+    else:
+        smu_z = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
     dmm_z = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
     dmm.range_i(setpoint)
     k26.write(f'smux.source.leveli = {setpoint}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
     sleep(dwell)
-    smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
+    if calstep.sourceonly:
+        smu_fs = setpoint
+    else:
+        smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
     dmm_fs = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
-    logf.info(f'I cal step : range={irange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
+    logf.info(f'\tadj values: range={irange}, smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
     k26.write(f'smux.source.calibratei({irange}, {zval}, {dmm_z}, {setpoint}, {dmm_fs})')
+    k26_get_errors(k26)
     if not calstep.sourceonly:
         k26.write(f'smux.measure.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
-    k26_get_errors(k26)
+        k26_get_errors(k26)
     return
 
 def step3(k26, dmm, chan, point=None):
@@ -209,8 +216,11 @@ def step3(k26, dmm, chan, point=None):
         step3_do_one(k26, dmm, chan, calpoint, 1)
         k26.write(f'smux.cal.polarity = smux.CAL_NEGATIVE')
         step3_do_one(k26, dmm, chan, calpoint, -1)
-    logprint('***** step 3 (low current ranges) done ****')
+        if calpoint.sourceonly:
+            k26.write(f'smux.sense = smux.SENSE_LOCAL')
+            k26_get_errors(k26)
     k26.write(f'smux.cal.polarity = smux.CAL_AUTO')
+    logprint('***** step 3 (low current ranges) done ****')
     return
 
 # similar to step3 but uses external shunt ! SMU pulse mode could be difficult to use while
@@ -244,7 +254,8 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     sleep(cfg.cal.ipulse_toff)
     dmm_z = dmm_z_raw / cfg.cal.r5_actual
     dmm_fs = dmm_fs_raw / cfg.cal.r5_actual
-    logf.info(f'I cal step (dmm raw zero={dmm_z_raw}, fs={dmm_fs_raw}): ' + calcmd)
+    logf.info(f'\tI cal step (dmm zero_raw={dmm_z_raw}, fs_raw={dmm_fs_raw}): ')
+    logf.info(f'\tadj values: range={irange}, smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
     k26.write(f'smux.source.calibratei({irange}, {zval}, {dmm_z}, {setpoint}, {dmm_fs})')
     k26.write(f'smux.measure.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
     k26_get_errors(k26)
@@ -272,8 +283,8 @@ def step4(k26, dmm, chan, point=None):
         step4_do_one(k26, dmm, chan, calpoint, 1)
         k26.write(f'smux.cal.polarity = smux.CAL_NEGATIVE')
         step4_do_one(k26, dmm, chan, calpoint, -1)
-    logprint('***** step 3 (hi current ranges) done ****')
     k26.write(f'smux.cal.polarity = smux.CAL_AUTO')
+    logprint('***** step 3 (hi current ranges) done ****')
     return
 
 def step5(k26, dmm, chan, point=None):
