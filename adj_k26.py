@@ -232,6 +232,7 @@ def step3(k26, dmm, chan, point=None):
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
     input("-------- press Enter when ready ---------")
     k26.write(f'smux.source.func = smux.OUTPUT_DCAMPS')
+    k26_write(f'smux.source.limitv = 6')
     dmm.config_i()
     points = k2602_points.icalsteps
     if point in range(0, len(points)):
