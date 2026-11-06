@@ -52,7 +52,7 @@ def sanity_check(range, setpoint, rdg):
 # save a bit of boiler
 # mode : 'i' or 'v'
 def smu_cal_saverange(k26, mode, sourceonly, range, zval, smu_z, dmm_z, fsval, smu_fs, dmm_fs):
-    logf.info(f'\tadj values: range={range}, smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
+    logf.info(f'\t\tadj values: range={range}, smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
     sanity_check(range, zval, smu_z)
     sanity_check(range, zval, dmm_z)
     sanity_check(range, fsval, smu_fs)
@@ -121,7 +121,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
         vrange = -calstep.range
         zval = -calstep.zval
         setpoint = -calstep.setpoint
-    logf.info(f'\n\t step2 : range={vrange}, z={zval}, setpoint={setpoint}')
+    logf.info(f'\trange={vrange}, z={zval}, setpoint={setpoint}')
     dmm.range_v(setpoint / 100) # range down two decades to capture zero point
     k26.write(f'smux.source.levelv = {zval}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
@@ -172,7 +172,7 @@ def step2(k26, dmm, chan, point=None):
     if point in range(0, len(points)):
         points = [points[point]]
     for calpoint in points:
-        logprint(f'V cal point: {calpoint}')
+        logprint(f'************************\n {calpoint}')
         k26.write(f'smux.source.rangev = {calpoint.range}')
         k26.write(f'smux.sense = smux.{calpoint.sensemode}')
         k26.write(f'smux.cal.polarity = smux.CAL_POSITIVE')
@@ -196,7 +196,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
         irange = -calstep.range
         zval = -calstep.zval
         setpoint = -calstep.setpoint
-    logf.info(f'\n\t step3 {setpoint}')
+    logf.info(f'\trange={irange}, z={zval}, setpoint={setpoint}')
     dmm.range_i(setpoint / 100) # range down two decades to capture zero point
     k26.write(f'smux.source.leveli = {zval}')
     if calstep.config_dwell:
@@ -252,7 +252,7 @@ def step3(k26, dmm, chan, point=None):
     if point in range(0, len(points)):
         points = [points[point]]
     for calpoint in points:
-        logprint(f'I cal point: {calpoint}')
+        logprint(f'************************\n {calpoint}')
         k26.write(f'smux.source.rangei = {calpoint.range}')
         k26.write(f'smux.sense = smux.{calpoint.sensemode}')
         k26.write(f'smux.cal.polarity = smux.CAL_POSITIVE')
@@ -277,7 +277,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
         irange = -calstep.range
         zval = -calstep.zval
         setpoint = -calstep.setpoint
-    logf.info(f'\n\t step4 {setpoint}')
+    logf.info(f'\trange={irange}, z={zval}, setpoint={setpoint}')
     dmm.range_v(setpoint * cfg.cal.r5_actual / 100) # range down two decades to capture zero point
     k26.write(f'smux.source.leveli = {zval}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
@@ -297,7 +297,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     sleep(cfg.cal.ipulse_toff)
     dmm_z = dmm_z_raw / cfg.cal.r5_actual
     dmm_fs = dmm_fs_raw / cfg.cal.r5_actual
-    logf.info(f'\tI cal step (dmm zero_raw={dmm_z_raw}, fs_raw={dmm_fs_raw}): ')
+    logf.info(f'\t\tdmm zero_raw={dmm_z_raw}, fs_raw={dmm_fs_raw}: ')
     smu_cal_saverange(k26, 'i', 0, irange, zval, smu_z, dmm_z, setpoint, smu_fs, dmm_fs)
     return
 
@@ -330,7 +330,7 @@ def step4(k26, dmm, chan, point=None):
     if point in range(0, len(points)):
         points = [points[point]]
     for calpoint in points:
-        logprint(f'I cal point: {calpoint}')
+        logprint(f'************************\n {calpoint}')
         k26.write(f'smux.source.rangei = {calpoint.range}')
         k26.write(f'smux.sense = smux.{calpoint.sensemode}')
         k26.write(f'smux.cal.polarity = smux.CAL_POSITIVE')
