@@ -501,7 +501,7 @@ def main():
     k26_get_errors(k26)
     uptime = round(k26.query_ascii_values('print(os.clock())')[0]/60)
     logf.info(f'connected to model {k26_model}, sn # {k26_sn}, rev {k26_rev}; uptime {uptime} min.')
-    k26.writelog(f'smux = smu{chan}')  #convenient alias
+    k26_writelog(f'smux = smu{chan}')  #convenient alias
 
     if uptime < (2 * 60):
         logprint('******* WARNING **********')
