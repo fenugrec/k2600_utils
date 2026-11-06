@@ -37,6 +37,19 @@ from magiconfig import magiconfig
 def logprint(*args, **kwargs):
     logf.info(*args, **kwargs)
 
+# ret false if reading 'far' from setpoint
+def sanity_check(range, setpoint, rdg):
+    if abs(setpoint) <= abs(range/100):
+        # looks like 'zero': check within 5%
+        if abs(rdg / range) < 0.05:
+            return True
+    else:
+        # keep non-zero evaluation separate, even if mathematically similar
+        if abs((rdg - setpoint) / range) < 0.05:
+            return True
+    logprint(f'********** sanity warning ! rdg={rdg} suspicious on range={range} setpoint={setpoint} ! ************')
+    return False
+
 def open_k26(resman):
     k26_res = resman.open_resource(cfg.dut.res)
     k26_res.baud_rate = cfg.dut.baud
