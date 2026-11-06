@@ -19,7 +19,6 @@
 
 # TODO :
 # -debug mode with alt settings for dwell, etc in .conf
-# -sanity check wiring at start of each step (i.e. set 1V read 1V +- 10% etc)
 # -unify config naming of ipulse_ton etc vs config_dwell
 
 import pyvisa
@@ -156,16 +155,18 @@ def step2(k26, dmm, chan, point=None):
     input("-------- press Enter when ready ---------")
     k26.write(f'smux.source.func = smux.OUTPUT_DCVOLTS')
     dmm.config_v()
-    # sanity check wiring : 1V +- 5%
+    # sanity check wiring : V +- 5%
+    testval = 0.9
+    dmm.range_v(testval)
     k26.write(f'smux.sense = smux.SENSE_LOCAL')
-    k26.write(f'smux.source.rangev = 1')
-    k26.write(f'smux.source.levelv = 1')
+    k26.write(f'smux.source.rangev = {testval}')
+    k26.write(f'smux.source.levelv = {testval}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
     sleep(2)
     rdg=dmm.read_v()
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
-    if abs(rdg - 1) >= 0.05:
-        logprint(f'******************* WARNING ******************\n**** verify connections, applied 1V got {rdg} from DMM ****')
+    if abs(rdg - testval)/testval >= 0.05:
+        logprint(f'******************* WARNING ******************\n**** verify connections, applied {testval} got {rdg} from DMM ****')
         return
     points = k2602_points.vcalsteps
     if point in range(0, len(points)):
@@ -232,8 +233,21 @@ def step3(k26, dmm, chan, point=None):
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
     input("-------- press Enter when ready ---------")
     k26.write(f'smux.source.func = smux.OUTPUT_DCAMPS')
-    k26_write(f'smux.source.limitv = 6')
+    k26.write(f'smux.source.limitv = 6')
     dmm.config_i()
+    # sanity check wiring : I +- 5%
+    testval = 9e-3
+    dmm.range_i(testval)
+    k26.write(f'smux.sense = smux.SENSE_LOCAL')
+    k26.write(f'smux.source.rangei = {testval}')
+    k26.write(f'smux.source.leveli = {testval}')
+    k26.write(f'smux.source.output = smux.OUTPUT_ON')
+    sleep(2)
+    rdg=dmm.read_i()
+    k26.write(f'smux.source.output = smux.OUTPUT_OFF')
+    if abs(rdg - testval)/testval >= 0.05:
+        logprint(f'******************* WARNING ******************\n**** verify connections, applied {testval} got {rdg} from DMM ****')
+        return
     points = k2602_points.icalsteps
     if point in range(0, len(points)):
         points = [points[point]]
@@ -297,7 +311,21 @@ def step4(k26, dmm, chan, point=None):
     input("-------- press Enter when ready ---------")
     dmm.config_v()
     k26.write(f'smux.source.func = smux.OUTPUT_DCAMPS')
-    k26_write(f'smux.source.limitv = 6')
+    k26.write(f'smux.source.limitv = 6')
+    # sanity check wiring : I +- 5%
+    testval = 900e-3
+    dmm.range_v(testval * cfg.cal.r5_actual)
+    k26.write(f'smux.sense = smux.SENSE_LOCAL')
+    k26.write(f'smux.source.rangei = {testval}')
+    k26.write(f'smux.source.leveli = {testval}')
+    k26.write(f'smux.source.output = smux.OUTPUT_ON')
+    sleep(2)
+    rdg=dmm.read_v()
+    k26.write(f'smux.source.output = smux.OUTPUT_OFF')
+    rdg = rdg / cfg.cal.r5_actual
+    if abs(rdg - testval)/testval >= 0.05:
+        logprint(f'******************* WARNING ******************\n**** verify connections, applied {testval} got {rdg} from DMM ****')
+        return
     points = k2602_points.icalsteps_hi
     if point in range(0, len(points)):
         points = [points[point]]
