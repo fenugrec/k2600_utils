@@ -95,7 +95,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
         vrange = -calstep.range
         zval = -calstep.zval
         setpoint = -calstep.setpoint
-    logf.info(f'\n\t step2 {setpoint}')
+    logf.info(f'\n\t step2 : range={vrange}, z={zval}, setpoint={setpoint}')
     dmm.range_v(setpoint / 100) # range down two decades to capture zero point
     k26.write(f'smux.source.levelv = {zval}')
     k26.write(f'smux.source.output = smux.OUTPUT_ON')
@@ -118,7 +118,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
         smu_fs = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'smu').median
     dmm_fs = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
-    logf.info(f'V cal step : range={vrange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
+    logf.info(f'\tadj values: range={vrange}, smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
     k26.write(f'smux.source.calibratev({vrange}, {zval}, {dmm_z}, {setpoint}, {dmm_fs})')
     k26_get_errors(k26)
     if not calstep.sourceonly:
