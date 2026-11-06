@@ -120,9 +120,10 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
     logf.info(f'V cal step : range={vrange} smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
     k26.write(f'smux.source.calibratev({vrange}, {zval}, {dmm_z}, {setpoint}, {dmm_fs})')
+    k26_get_errors(k26)
     if not calstep.sourceonly:
         k26.write(f'smux.measure.calibratev({vrange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
-    k26_get_errors(k26)
+        k26_get_errors(k26)
     return
 
 def step2(k26, dmm, chan, point=None):
@@ -144,8 +145,11 @@ def step2(k26, dmm, chan, point=None):
         step2_do_one(k26, dmm, chan, calpoint, 1)
         k26.write(f'smux.cal.polarity = smux.CAL_NEGATIVE')
         step2_do_one(k26, dmm, chan, calpoint, -1)
-    logprint('***** step 2 (voltage ranges) done ****')
+        if calpoint.sourceonly:
+            k26.write(f'smux.sense = smux.SENSE_LOCAL')
+            k26_get_errors(k26)
     k26.write(f'smux.cal.polarity = smux.CAL_AUTO')
+    logprint('***** step 2 (voltage ranges) done ****')
     return
 
 # step3 : current <= 1A
