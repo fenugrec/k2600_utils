@@ -8,6 +8,7 @@
 
 import logging
 from statistics import median, stdev
+import traceback
 
 ## dummy pyvisa resources for offline debugging
 class pyvisa_dummy():
@@ -37,6 +38,7 @@ class pyvisa_dummy():
 def k26_get_errors(res):
     n = res.query_ascii_values('print(errorqueue.count)')[0]
     if n == 0: return
+    traceback.print_stack()
     while n > 0:
         res.write('ec, em = errorqueue.next()')
         ec = res.query_ascii_values('print(ec)')[0]
