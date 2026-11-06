@@ -156,6 +156,17 @@ def step2(k26, dmm, chan, point=None):
     input("-------- press Enter when ready ---------")
     k26.write(f'smux.source.func = smux.OUTPUT_DCVOLTS')
     dmm.config_v()
+    # sanity check wiring : 1V +- 5%
+    k26.write(f'smux.sense = smux.SENSE_LOCAL')
+    k26.write(f'smux.source.rangev = 1')
+    k26.write(f'smux.source.levelv = 1')
+    k26.write(f'smux.source.output = smux.OUTPUT_ON')
+    sleep(2)
+    rdg=dmm.read_v()
+    k26.write(f'smux.source.output = smux.OUTPUT_OFF')
+    if abs(rdg - 1) >= 0.05:
+        logprint(f'******************* WARNING ******************\n**** verify connections, applied 1V got {rdg} from DMM ****')
+        return
     points = k2602_points.vcalsteps
     if point in range(0, len(points)):
         points = [points[point]]
