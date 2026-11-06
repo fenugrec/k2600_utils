@@ -7,12 +7,14 @@
 # - copy/edit .conf file for connection settings and cal resistor values
 # - customize dmm.py as required for DMM to be used
 # - dry-run to go through entire cal without saving to eeprom (easily reverted with reset())
+#   note : with dry-run, cal constants are saved (to SMU' RAM) progressively, and will disappear
+#   on a power cycle or an explicit restore with '-r'
 # - can run individual 'steps' and test points
 
 # **** code structure
-# - cal steps described in ref manual section 16, are implemented in functions 'step2' to 'step7';
+# - cal steps described in ref manual section 16, are implemented in functions 'step2' to 'step7'
 # - part of step 3 (current ranges) is split since it requires different wiring and code,
-#   and the numbering of steps no longer matches the refman.
+#   thus the numbering of steps no longer matches the refman.
 # - A bit of confusion between 'steps' i.e. ref manual steps, and individual test points per range
 # - main() near the end initializes stuff and includes step1
 # - general config is held in external adj.conf to ideally avoid having to edit this script at all
