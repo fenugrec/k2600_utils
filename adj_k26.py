@@ -50,6 +50,20 @@ def sanity_check(range, setpoint, rdg):
     logprint(f'********** sanity warning ! rdg={rdg} suspicious on range={range} setpoint={setpoint} ! ************')
     return False
 
+# save a bit of boiler
+# mode : 'i' or 'v'
+def smu_cal_saverange(k26, mode, sourceonly, range, zval, smu_z, dmm_z, fsval, smu_fs, dmm_fs):
+    logf.info(f'\tadj values: range={range}, smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
+    sanity_check(range, zval, smu_z)
+    sanity_check(range, zval, dmm_z)
+    sanity_check(range, fsval, smu_fs)
+    sanity_check(range, fsval, dmm_fs)
+    k26.write(f'smux.source.calibrate{mode}({range}, {zval}, {dmm_z}, {fsval}, {dmm_fs})')
+    k26_get_errors(k26)
+    if not sourceonly:
+        k26.write(f'smux.measure.calibrate{mode}({range}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
+        k26_get_errors(k26)
+
 def open_k26(resman):
     k26_res = resman.open_resource(cfg.dut.res)
     k26_res.baud_rate = cfg.dut.baud
@@ -131,12 +145,7 @@ def step2_do_one(k26, dmm, chan, calstep, sign):
         smu_fs = read_multi(k26r, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'smu').median
     dmm_fs = read_multi(dmm.read_v, cfg.cal.discard_v, cfg.cal.keep_v, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
-    logf.info(f'\tadj values: range={vrange}, smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
-    k26.write(f'smux.source.calibratev({vrange}, {zval}, {dmm_z}, {setpoint}, {dmm_fs})')
-    k26_get_errors(k26)
-    if not calstep.sourceonly:
-        k26.write(f'smux.measure.calibratev({vrange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
-        k26_get_errors(k26)
+    smu_cal_saverange(k26, 'v', calstep.sourceonly, vrange, zval, smu_z, dmm_z, setpoint, smu_fs, dmm_fs)
     return
 
 def step2(k26, dmm, chan, point=None):
@@ -202,12 +211,7 @@ def step3_do_one(k26, dmm, chan, calstep, sign):
         smu_fs = read_multi(k26r, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'smu').median
     dmm_fs = read_multi(dmm.read_i, cfg.cal.discard_i, cfg.cal.keep_i, logf.debug, 'dmm').median
     k26.write(f'smux.source.output = smux.OUTPUT_OFF')
-    logf.info(f'\tadj values: range={irange}, smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
-    k26.write(f'smux.source.calibratei({irange}, {zval}, {dmm_z}, {setpoint}, {dmm_fs})')
-    k26_get_errors(k26)
-    if not calstep.sourceonly:
-        k26.write(f'smux.measure.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
-        k26_get_errors(k26)
+    smu_cal_saverange(k26, 'i', calstep.sourceonly, irange, zval, smu_z, dmm_z, setpoint, smu_fs, dmm_fs)
     return
 
 def step3(k26, dmm, chan, point=None):
@@ -268,10 +272,7 @@ def step4_do_one(k26, dmm, chan, calstep, sign):
     dmm_z = dmm_z_raw / cfg.cal.r5_actual
     dmm_fs = dmm_fs_raw / cfg.cal.r5_actual
     logf.info(f'\tI cal step (dmm zero_raw={dmm_z_raw}, fs_raw={dmm_fs_raw}): ')
-    logf.info(f'\tadj values: range={irange}, smu_z={smu_z} dmm_z={dmm_z} smu_fs={smu_fs} dmm_fs={dmm_fs}')
-    k26.write(f'smux.source.calibratei({irange}, {zval}, {dmm_z}, {setpoint}, {dmm_fs})')
-    k26.write(f'smux.measure.calibratei({irange}, {smu_z}, {dmm_z}, {smu_fs}, {dmm_fs})')
-    k26_get_errors(k26)
+    smu_cal_saverange(k26, 'i', 0, irange, zval, smu_z, dmm_z, setpoint, smu_fs, dmm_fs)
     return
 
 def step4(k26, dmm, chan, point=None):
